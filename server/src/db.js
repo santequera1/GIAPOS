@@ -178,9 +178,9 @@ function seedIfEmpty() {
 
   const hash = (pw) => bcrypt.hashSync(pw, 10);
   const insertUser = db.prepare('INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)');
-  insertUser.run('admin', hash('admin123'), 'Administrador', 'admin');
-  insertUser.run('cajero', hash('cajero123'), 'Caja Convención', 'cashier');
-  insertUser.run('cocina', hash('cocina123'), 'Despacho', 'kitchen');
+  insertUser.run('admin', hash('GiaAdmin2026*'), 'Administrador', 'admin');
+  insertUser.run('cajero', hash('GiaPos2026*'), 'Caja Convención', 'cashier');
+  insertUser.run('cocina', hash('GiaCocina2026*'), 'Despacho', 'kitchen');
 
   // Categories Gia Gelatería
   const insertCat = db.prepare('INSERT INTO categories (id, name, emoji, color) VALUES (?, ?, ?, ?)');
