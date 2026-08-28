@@ -18,6 +18,8 @@ import {
   Eye,
   Shuffle,
   Layers,
+  Percent,
+  Tag,
 } from 'lucide-react';
 import { useStore, type OrderItem, type PaymentMethod, type Product, type PaymentSplit } from '@/store/useStore';
 import { formatPrice } from '@/lib/format';
@@ -62,6 +64,8 @@ interface TabOrder {
   paymentMethod: PaymentMethod;
   paymentSplit?: PaymentSplit;
   cashReceived: string;
+  discountType?: 'percent' | 'fixed';
+  discountValue?: number;
 }
 
 const DEFAULT_CUSTOMER = {
@@ -102,11 +106,14 @@ export const POSPage: React.FC = () => {
         notes: '',
         paymentMethod: 'cash',
         cashReceived: '',
+        discountType: 'percent',
+        discountValue: 0,
       },
     ];
   });
 
   const [activeTabId, setActiveTabId] = useState<string>(() => tabs[0]?.id || 'tab-1');
+  const [showDiscountInput, setShowDiscountInput] = useState(false);
 
   // Active Tab Data
   const currentTab = useMemo(() => {
@@ -124,6 +131,8 @@ export const POSPage: React.FC = () => {
   };
   const cashReceived = currentTab.cashReceived;
   const orderNotes = currentTab.notes;
+  const discountType = currentTab.discountType || 'percent';
+  const discountValue = currentTab.discountValue || 0;
 
   // Persist tabs
   useEffect(() => {
@@ -147,9 +156,18 @@ export const POSPage: React.FC = () => {
   const [countdown, setCountdown] = useState<number>(3);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Totals Calculation
+  // Totals Calculation with Discount
   const subtotal = useMemo(() => cart.reduce((acc, item) => acc + item.price * item.quantity, 0), [cart]);
-  const total = subtotal;
+
+  const discountAmount = useMemo(() => {
+    if (discountValue <= 0) return 0;
+    if (discountType === 'percent') {
+      return Math.round((subtotal * Math.min(100, discountValue)) / 100);
+    }
+    return Math.min(subtotal, discountValue);
+  }, [subtotal, discountType, discountValue]);
+
+  const total = Math.max(0, subtotal - discountAmount);
   const numericCash = Number(cashReceived) || 0;
   const change = paymentMethod === 'cash' && numericCash > 0 ? numericCash - total : 0;
 
@@ -431,7 +449,7 @@ export const POSPage: React.FC = () => {
         items: cart,
         subtotal,
         deliveryFee: 0,
-        discount: 0,
+        discount: discountAmount,
         total,
         paymentMethod,
         paymentSplit: paymentMethod === 'mixed' ? paymentSplit : undefined,
@@ -1224,8 +1242,99 @@ export const POSPage: React.FC = () => {
             </div>
           )}
 
+          {/* Discount / Promo Controls */}
+          <div className="pt-1.5 border-t border-[#364266]/10">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setShowDiscountInput(!showDiscountInput)}
+                className={cn(
+                  'text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 transition-all',
+                  discountValue > 0
+                    ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                    : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-[#FAF8EA]'
+                )}
+              >
+                <Tag size={11} />
+                <span>{discountValue > 0 ? `Descuento: ${discountType === 'percent' ? discountValue + '%' : formatPrice(discountValue)}` : '+ Aplicar Descuento'}</span>
+              </button>
+
+              {discountValue > 0 && (
+                <button
+                  type="button"
+                  onClick={() => updateActiveTab({ discountValue: 0 })}
+                  className="text-[10px] text-red-600 hover:underline flex items-center gap-0.5"
+                >
+                  <X size={10} /> Quitar
+                </button>
+              )}
+            </div>
+
+            {showDiscountInput && (
+              <div className="mt-1.5 p-2 rounded-xl bg-white border border-[#C6BF81]/50 space-y-1.5 animate-in fade-in duration-150">
+                <div className="flex gap-1">
+                  {[5, 10, 15, 20, 50].map((pct) => (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => {
+                        updateActiveTab({ discountType: 'percent', discountValue: pct });
+                        setShowDiscountInput(false);
+                      }}
+                      className={cn(
+                        'flex-1 py-1 text-[10px] font-bold rounded-lg border transition-all',
+                        discountType === 'percent' && discountValue === pct
+                          ? 'bg-[#364266] text-[#FEF3DE] border-[#364266]'
+                          : 'bg-gray-50 hover:bg-[#FAF8EA] text-[#364266] border-gray-200'
+                      )}
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex gap-1.5 items-center pt-0.5">
+                  <select
+                    value={discountType}
+                    onChange={(e) => updateActiveTab({ discountType: e.target.value as 'percent' | 'fixed' })}
+                    className="p-1 text-[10px] font-bold rounded-lg border border-gray-200 bg-white"
+                  >
+                    <option value="percent">% Porc.</option>
+                    <option value="fixed">$ COP</option>
+                  </select>
+                  <input
+                    type="number"
+                    value={discountValue || ''}
+                    onChange={(e) => updateActiveTab({ discountValue: Number(e.target.value) || 0 })}
+                    placeholder={discountType === 'percent' ? 'Ej. 10 (%)' : 'Ej. 5000 ($)'}
+                    className="flex-1 p-1 text-xs font-bold rounded-lg border border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDiscountInput(false)}
+                    className="px-2 py-1 rounded-lg bg-[#364266] text-[#FEF3DE] text-[10px] font-bold"
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Totals Summary */}
           <div className="pt-1 border-t border-[#364266]/10 space-y-0.5 text-xs">
+            {discountAmount > 0 && (
+              <>
+                <div className="flex justify-between text-[#897863] text-[11px]">
+                  <span>Subtotal:</span>
+                  <span>{formatPrice(subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-red-600 font-bold text-[11px]">
+                  <span>Descuento ({discountType === 'percent' ? `${discountValue}%` : 'Monto'}):</span>
+                  <span>-{formatPrice(discountAmount)}</span>
+                </div>
+              </>
+            )}
             <div className="flex items-baseline justify-between pt-0.5 text-sm sm:text-base font-sans font-bold text-[#364266]">
               <span>Total a Cobrar:</span>
               <span className="text-base sm:text-xl font-sans font-extrabold text-[#242D49]">{formatPrice(total)}</span>

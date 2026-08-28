@@ -51,7 +51,7 @@ export const CashShiftPage: React.FC = () => {
   const [loadingHistory, setLoadingHistory] = useState(false);
 
   // Closed Ticket Modal for printing
-  const [closedTicket, setClosedTicket] = useState<CashShift | null>(null);
+  const [closedTicket, setClosedTicket] = useState<any | null>(null);
 
   useEffect(() => {
     refreshCurrentShift();
@@ -74,6 +74,156 @@ export const CashShiftPage: React.FC = () => {
   const countedCash = Number(actualCashInput) || 0;
   const difference = countedCash - expectedCash;
 
+  const handlePrintZReport = (shiftData: any) => {
+    if (!shiftData) return;
+
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'fixed';
+    printFrame.style.right = '0';
+    printFrame.style.bottom = '0';
+    printFrame.style.width = '0';
+    printFrame.style.height = '0';
+    printFrame.style.border = '0';
+    document.body.appendChild(printFrame);
+
+    const frameDoc = printFrame.contentWindow?.document;
+    if (!frameDoc) return;
+
+    const shiftId = shiftData.id || 1;
+    const cashier = shiftData.cashierName || shiftData.cashier_name || 'Cajero Gia';
+    const initial = shiftData.initialCash !== undefined ? shiftData.initialCash : shiftData.initial_cash || 0;
+    const cash = shiftData.cashSales !== undefined ? shiftData.cashSales : shiftData.cash_sales || 0;
+    const withdrawals = shiftData.totalWithdrawals !== undefined ? shiftData.totalWithdrawals : shiftData.total_withdrawals || 0;
+    const debit = shiftData.debitSales !== undefined ? shiftData.debitSales : shiftData.debit_sales || 0;
+    const credit = shiftData.creditSales !== undefined ? shiftData.creditSales : shiftData.credit_sales || 0;
+    const transfer = shiftData.transferSales !== undefined ? shiftData.transferSales : shiftData.transfer_sales || 0;
+    const totalSales = shiftData.totalSales !== undefined ? shiftData.totalSales : shiftData.total_sales || 0;
+    const totalOrders = shiftData.totalOrders !== undefined ? shiftData.totalOrders : shiftData.total_orders || 0;
+    const expected = shiftData.expectedCash !== undefined ? shiftData.expectedCash : (initial + cash - withdrawals);
+    const actual = shiftData.actualCash !== undefined ? shiftData.actualCash : shiftData.actual_cash || 0;
+    const diff = shiftData.difference !== undefined ? shiftData.difference : (actual - expected);
+    const dateStr = formatFullDate(shiftData.closedAt || shiftData.closed_at || new Date().toISOString());
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Reporte Z - Turno #${shiftId}</title>
+          <style>
+            @page {
+              margin: 0;
+              size: auto;
+            }
+            @media print {
+              html, body {
+                width: 70mm;
+                margin: 0 auto;
+                padding: 1.5mm 0mm;
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+              }
+            }
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, monospace, sans-serif;
+              font-size: 10px;
+              color: #000;
+              background: #fff;
+              width: 70mm;
+              margin: 0 auto;
+              padding: 1.5mm 0mm;
+              line-height: 1.2;
+            }
+            .text-center { text-align: center; }
+            .text-right { text-align: right; }
+            .font-bold { font-weight: bold; }
+            .logo-box {
+              width: 36px;
+              height: 36px;
+              background-color: #242D49;
+              border-radius: 6px;
+              margin: 0 auto 3px auto;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 3px;
+            }
+            .logo-box img {
+              max-width: 100%;
+              max-height: 100%;
+              object-fit: contain;
+            }
+            .divider { border-top: 1px solid #000; margin: 3px 0; }
+            .dashed { border-top: 1px dashed #333; margin: 3px 0; }
+            .row { display: flex; justify-content: space-between; margin: 1px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="text-center">
+            <div class="logo-box">
+              <img src="${window.location.origin}/logo/gia-logo-light.png" alt="GIA" />
+            </div>
+            <p class="font-bold" style="font-size: 11px;">GIACARTAGENA SAS</p>
+            <p style="font-size: 8.5px;">NIT: 901961461-3 • CALLE BALOCO</p>
+            <p style="font-size: 8.5px;">CIERRE DE CAJA (REPORTE Z)</p>
+          </div>
+
+          <div class="divider"></div>
+
+          <div style="font-size: 9px;">
+            <div class="row"><span><strong>Turno:</strong> #${shiftId}</span><span>${dateStr}</span></div>
+            <div class="row"><span><strong>Cajero:</strong> ${cashier}</span><span><strong>Pedidos:</strong> ${totalOrders}</span></div>
+          </div>
+
+          <div class="dashed"></div>
+
+          <div style="font-size: 9.5px;">
+            <div class="row"><span>Base Inicial:</span><span>${formatPrice(initial)}</span></div>
+            <div class="row"><span>Ventas Efectivo:</span><span>+${formatPrice(cash)}</span></div>
+            ${withdrawals > 0 ? `<div class="row" style="color: #000; font-weight: bold;"><span>Retiros / Gastos:</span><span>-${formatPrice(withdrawals)}</span></div>` : ''}
+            <div class="row"><span>Ventas T. Débito:</span><span>${formatPrice(debit)}</span></div>
+            <div class="row"><span>Ventas T. Crédito:</span><span>${formatPrice(credit)}</span></div>
+            <div class="row"><span>Ventas QR / Nequi:</span><span>${formatPrice(transfer)}</span></div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div style="font-size: 10px;">
+            <div class="row font-bold" style="font-size: 11px;"><span>TOTAL VENTAS:</span><span>${formatPrice(totalSales)}</span></div>
+            <div class="row" style="font-size: 9px; margin-top: 2px;"><span>Efectivo Esperado:</span><span>${formatPrice(expected)}</span></div>
+            <div class="row" style="font-size: 9px;"><span>Efectivo Físico Contado:</span><span>${formatPrice(actual)}</span></div>
+            <div class="row font-bold" style="font-size: 9.5px;"><span>Diferencia:</span><span>${diff === 0 ? 'Exacto ($0)' : diff > 0 ? '+' + formatPrice(diff) : formatPrice(diff)}</span></div>
+          </div>
+
+          <div class="dashed" style="margin-top: 4px;"></div>
+          <div class="text-center" style="font-size: 8px; margin-top: 2px;">
+            <p>Gia Gelatería POS • Arqueo Conforme</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    frameDoc.open();
+    frameDoc.write(htmlContent);
+    frameDoc.close();
+
+    setTimeout(() => {
+      printFrame.contentWindow?.focus();
+      printFrame.contentWindow?.print();
+      setTimeout(() => {
+        if (document.body.contains(printFrame)) {
+          document.body.removeChild(printFrame);
+        }
+      }, 2000);
+    }, 250);
+  };
+
   const handleCloseShift = async () => {
     if (!currentShift) {
       toast.error('No hay un turno abierto para cerrar');
@@ -93,6 +243,8 @@ export const CashShiftPage: React.FC = () => {
       setActualCashInput('');
       setClosureNotes('');
       loadHistory();
+      // Auto-launch thermal printing
+      if (closed) handlePrintZReport(closed);
     } catch (err) {
       console.error(err);
       toast.error('Error al cerrar el turno de caja');
@@ -173,13 +325,24 @@ export const CashShiftPage: React.FC = () => {
           )}
 
           {currentShift?.status === 'open' && (
-            <button
-              onClick={() => setShowWithdrawalModal(true)}
-              className="px-3.5 py-2 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
-            >
-              <MinusCircle size={14} className="text-red-600" />
-              <span>Registrar Retiro / Gasto</span>
-            </button>
+            <>
+              <button
+                onClick={() => handlePrintZReport(currentShift)}
+                className="px-3.5 py-2 rounded-xl bg-gray-100 text-[#364266] hover:bg-gray-200 border border-gray-300 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+                title="Imprimir reporte parcial de turno (Reporte X)"
+              >
+                <Printer size={14} />
+                <span>Imprimir Reporte X</span>
+              </button>
+
+              <button
+                onClick={() => setShowWithdrawalModal(true)}
+                className="px-3.5 py-2 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+              >
+                <MinusCircle size={14} className="text-red-600" />
+                <span>Registrar Retiro / Gasto</span>
+              </button>
+            </>
           )}
 
           <button
@@ -488,13 +651,21 @@ export const CashShiftPage: React.FC = () => {
         </div>
       )}
 
-      {/* Shift History Table */}
+      {/* Shift History Table with REPRINT Buttons */}
       <div className="bg-white p-6 rounded-3xl border border-[#364266]/10 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-          <History size={20} className="text-[#364266]" />
-          <h2 className="font-serif font-bold text-lg text-[#364266]">
-            Historial de Cierres de Caja (Reportes Z Anteriores)
-          </h2>
+        <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <History size={20} className="text-[#364266]" />
+            <h2 className="font-serif font-bold text-lg text-[#364266]">
+              Historial de Cierres de Caja (Reportes Z Anteriores)
+            </h2>
+          </div>
+          <button
+            onClick={loadHistory}
+            className="text-xs text-[#364266] font-bold hover:underline flex items-center gap-1"
+          >
+            <RotateCcw size={13} /> Actualizar
+          </button>
         </div>
 
         {history.length === 0 ? (
@@ -511,7 +682,7 @@ export const CashShiftPage: React.FC = () => {
                   <th className="py-2.5 px-3">Total Ventas</th>
                   <th className="py-2.5 px-3">Efectivo Físico</th>
                   <th className="py-2.5 px-3">Diferencia</th>
-                  <th className="py-2.5 px-3 text-right">Estado</th>
+                  <th className="py-2.5 px-3 text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-[#364266]">
@@ -532,13 +703,15 @@ export const CashShiftPage: React.FC = () => {
                         <span className="text-red-600">{formatPrice(s.difference)}</span>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-right">
-                      <span className={cn(
-                        'px-2 py-0.5 rounded-full font-bold text-[10px]',
-                        s.status === 'open' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'
-                      )}>
-                        {s.status === 'open' ? 'Abierto' : 'Cerrado'}
-                      </span>
+                    <td className="py-3 px-3 text-center">
+                      <button
+                        onClick={() => handlePrintZReport(s)}
+                        className="px-2.5 py-1 rounded-xl bg-white border border-[#364266]/20 hover:bg-[#FAF8EA] text-[#364266] text-xs font-bold inline-flex items-center gap-1 shadow-sm transition-all"
+                        title="Reimprimir Reporte Z en impresora térmica"
+                      >
+                        <Printer size={13} />
+                        <span>Reimprimir Cierre</span>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -699,56 +872,56 @@ export const CashShiftPage: React.FC = () => {
                 </div>
 
                 <div className="text-[11px] space-y-0.5">
-                  <p><strong>Cajero:</strong> {closedTicket.cashierName}</p>
-                  <p><strong>Total Pedidos:</strong> {closedTicket.totalOrders}</p>
+                  <p><strong>Cajero:</strong> {closedTicket.cashierName || closedTicket.cashier_name}</p>
+                  <p><strong>Total Pedidos:</strong> {closedTicket.totalOrders || closedTicket.total_orders}</p>
                 </div>
 
                 <div className="py-2 border-t border-b border-dashed border-[#364266]/20 space-y-1">
                   <div className="flex justify-between">
                     <span>Base Inicial:</span>
-                    <span>{formatPrice(closedTicket.initialCash)}</span>
+                    <span>{formatPrice(closedTicket.initialCash || closedTicket.initial_cash || 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Ventas Efectivo:</span>
-                    <span>+{formatPrice(closedTicket.cashSales)}</span>
+                    <span>+{formatPrice(closedTicket.cashSales || closedTicket.cash_sales || 0)}</span>
                   </div>
-                  {(closedTicket.totalWithdrawals || 0) > 0 && (
+                  {(closedTicket.totalWithdrawals || closedTicket.total_withdrawals || 0) > 0 && (
                     <div className="flex justify-between text-red-600">
                       <span>Retiros / Gastos:</span>
-                      <span>-{formatPrice(closedTicket.totalWithdrawals || 0)}</span>
+                      <span>-{formatPrice(closedTicket.totalWithdrawals || closedTicket.total_withdrawals || 0)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span>Ventas Débito:</span>
-                    <span>{formatPrice(closedTicket.debitSales)}</span>
+                    <span>{formatPrice(closedTicket.debitSales || closedTicket.debit_sales || 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Ventas Crédito:</span>
-                    <span>{formatPrice(closedTicket.creditSales)}</span>
+                    <span>{formatPrice(closedTicket.creditSales || closedTicket.credit_sales || 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Ventas QR/Nequi:</span>
-                    <span>{formatPrice(closedTicket.transferSales)}</span>
+                    <span>{formatPrice(closedTicket.transferSales || closedTicket.transfer_sales || 0)}</span>
                   </div>
                 </div>
 
                 <div className="space-y-0.5 pt-1 font-bold">
                   <div className="flex justify-between text-sm">
                     <span>GRAN TOTAL:</span>
-                    <span>{formatPrice(closedTicket.totalSales)}</span>
+                    <span>{formatPrice(closedTicket.totalSales || closedTicket.total_sales || 0)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-[#897863]">
                     <span>Esperado Gaveta:</span>
-                    <span>{formatPrice(closedTicket.expectedCash)}</span>
+                    <span>{formatPrice(closedTicket.expectedCash || closedTicket.expected_cash || 0)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-emerald-700">
                     <span>Contado Gaveta:</span>
-                    <span>{formatPrice(closedTicket.actualCash)}</span>
+                    <span>{formatPrice(closedTicket.actualCash || closedTicket.actual_cash || 0)}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span>Diferencia:</span>
-                    <span className={closedTicket.difference === 0 ? 'text-emerald-700' : 'text-red-600'}>
-                      {closedTicket.difference >= 0 ? `+${formatPrice(closedTicket.difference)}` : formatPrice(closedTicket.difference)}
+                    <span className={(closedTicket.difference || 0) === 0 ? 'text-emerald-700' : 'text-red-600'}>
+                      {(closedTicket.difference || 0) >= 0 ? `+${formatPrice(closedTicket.difference || 0)}` : formatPrice(closedTicket.difference || 0)}
                     </span>
                   </div>
                 </div>
@@ -756,16 +929,16 @@ export const CashShiftPage: React.FC = () => {
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => window.print()}
-                  className="flex-1 py-2.5 rounded-xl border border-[#364266]/20 font-semibold text-xs text-[#364266] flex items-center justify-center gap-1.5"
+                  onClick={() => handlePrintZReport(closedTicket)}
+                  className="flex-1 py-2.5 rounded-xl bg-[#0091FF] hover:bg-[#0080E6] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md"
                 >
-                  <Printer size={15} /> Imprimir Tirilla
+                  <Printer size={15} /> Imprimir de Nuevo
                 </button>
                 <button
                   onClick={() => setClosedTicket(null)}
-                  className="flex-1 py-2.5 rounded-xl bg-[#364266] text-[#FEF3DE] font-semibold text-xs"
+                  className="flex-1 py-2.5 rounded-xl bg-[#364266] text-[#FEF3DE] font-semibold text-xs hover:bg-[#242D49]"
                 >
-                  Listo
+                  Cerrar
                 </button>
               </div>
             </motion.div>
