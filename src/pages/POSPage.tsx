@@ -105,6 +105,47 @@ export const POSPage: React.FC = () => {
       return;
     }
 
+    const isDualFlavor = flavor.id === 8 || 
+      flavor.name.toLowerCase().includes('maracuyá y corozo') || 
+      flavor.name.toLowerCase().includes('maracuya y corozo');
+
+    if (isDualFlavor) {
+      if (selectedGelatoSize.id === 'pequeno') {
+        const grandeSize = GELATO_SIZES.find(s => s.id === 'grande') || GELATO_SIZES[1];
+        setSelectedGelatoSize(grandeSize);
+        addItemToCart({
+          productId: flavor.id,
+          name: `Gelato ${grandeSize.name} — ${flavor.name}`,
+          size: grandeSize.name,
+          flavors: 'Maracuyá, Corozo (Dúo 2 Sabores)',
+          quantity: 1,
+          price: grandeSize.price,
+          notes: 'Dúo de 2 sabores',
+        });
+        toast.info(`Maracuyá y Corozo incluye 2 sabores: agregado como Grande (${formatPrice(grandeSize.price)})`);
+        setFirstFlavor(null);
+        return;
+      }
+
+      if (firstFlavor && firstFlavor.id !== flavor.id) {
+        toast.warning('Maracuyá y Corozo ya cuenta como 2 sabores completos. Elige un sabor simple o selecciona Maracuyá y Corozo desde el inicio.');
+        return;
+      }
+
+      addItemToCart({
+        productId: flavor.id,
+        name: `Gelato ${selectedGelatoSize.name} — ${flavor.name}`,
+        size: selectedGelatoSize.name,
+        flavors: 'Maracuyá, Corozo (Dúo 2 Sabores)',
+        quantity: 1,
+        price: selectedGelatoSize.price,
+        notes: 'Dúo de 2 sabores',
+      });
+      toast.success(`Agregado: Gelato ${selectedGelatoSize.name} — ${flavor.name}`);
+      setFirstFlavor(null);
+      return;
+    }
+
     if (selectedGelatoSize.scoops === 1) {
       addItemToCart({
         productId: flavor.id,
@@ -576,6 +617,11 @@ export const POSPage: React.FC = () => {
                         <p className="font-sans text-[11px] text-[#6B5E4F] not-italic line-clamp-1 mt-0.5 font-normal">
                           {flavor.description || 'Gelato artesanal'}
                         </p>
+                        {(flavor.id === 8 || flavor.name.toLowerCase().includes('maracuyá y corozo') || flavor.name.toLowerCase().includes('maracuya y corozo')) && (
+                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-[#242D49] text-[#FAF8EA] text-[10px] font-bold tracking-tight font-sans">
+                            🍨 Dúo • Solo Grande / Litro
+                          </span>
+                        )}
                       </div>
 
                       {isFirstSelected && (
