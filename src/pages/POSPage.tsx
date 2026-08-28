@@ -23,6 +23,7 @@ import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { PrintModal } from '@/components/PrintModal';
 
 const GELATO_SIZES = [
   { id: 'pequeno', name: 'Pequeño', scoops: 1, price: 15000, desc: '1 sabor', emoji: '🍦' },
@@ -105,47 +106,6 @@ export const POSPage: React.FC = () => {
       return;
     }
 
-    const isDualFlavor = flavor.id === 8 || 
-      flavor.name.toLowerCase().includes('maracuyá y corozo') || 
-      flavor.name.toLowerCase().includes('maracuya y corozo');
-
-    if (isDualFlavor) {
-      if (selectedGelatoSize.id === 'pequeno') {
-        const grandeSize = GELATO_SIZES.find(s => s.id === 'grande') || GELATO_SIZES[1];
-        setSelectedGelatoSize(grandeSize);
-        addItemToCart({
-          productId: flavor.id,
-          name: `Gelato ${grandeSize.name} — ${flavor.name}`,
-          size: grandeSize.name,
-          flavors: 'Maracuyá, Corozo (Dúo 2 Sabores)',
-          quantity: 1,
-          price: grandeSize.price,
-          notes: 'Dúo de 2 sabores',
-        });
-        toast.info(`Maracuyá y Corozo incluye 2 sabores: agregado como Grande (${formatPrice(grandeSize.price)})`);
-        setFirstFlavor(null);
-        return;
-      }
-
-      if (firstFlavor && firstFlavor.id !== flavor.id) {
-        toast.warning('Maracuyá y Corozo ya cuenta como 2 sabores completos. Elige un sabor simple o selecciona Maracuyá y Corozo desde el inicio.');
-        return;
-      }
-
-      addItemToCart({
-        productId: flavor.id,
-        name: `Gelato ${selectedGelatoSize.name} — ${flavor.name}`,
-        size: selectedGelatoSize.name,
-        flavors: 'Maracuyá, Corozo (Dúo 2 Sabores)',
-        quantity: 1,
-        price: selectedGelatoSize.price,
-        notes: 'Dúo de 2 sabores',
-      });
-      toast.success(`Agregado: Gelato ${selectedGelatoSize.name} — ${flavor.name}`);
-      setFirstFlavor(null);
-      return;
-    }
-
     if (selectedGelatoSize.scoops === 1) {
       addItemToCart({
         productId: flavor.id,
@@ -161,12 +121,13 @@ export const POSPage: React.FC = () => {
       if (!firstFlavor) {
         setFirstFlavor(flavor);
       } else {
-        const combinationName = firstFlavor.id === flavor.id
-          ? `Gelato ${selectedGelatoSize.name} — Doble ${flavor.name}`
+        const isSame = firstFlavor.id === flavor.id;
+        const combinationName = isSame
+          ? `Gelato ${selectedGelatoSize.name} — ${flavor.name}`
           : `Gelato ${selectedGelatoSize.name} — ${firstFlavor.name} + ${flavor.name}`;
 
-        const flavorsList = firstFlavor.id === flavor.id
-          ? `${flavor.name} (Doble)`
+        const flavorsList = isSame
+          ? `${flavor.name}`
           : `${firstFlavor.name}, ${flavor.name}`;
 
         addItemToCart({
@@ -183,6 +144,21 @@ export const POSPage: React.FC = () => {
         setFirstFlavor(null);
       }
     }
+  };
+
+  const handleAddFirstFlavorSolo = () => {
+    if (!firstFlavor) return;
+    addItemToCart({
+      productId: firstFlavor.id,
+      name: `Gelato ${selectedGelatoSize.name} — ${firstFlavor.name}`,
+      size: selectedGelatoSize.name,
+      flavors: firstFlavor.name,
+      quantity: 1,
+      price: selectedGelatoSize.price,
+      notes: '',
+    });
+    toast.success(`Agregado: Gelato ${selectedGelatoSize.name} (${firstFlavor.name})`);
+    setFirstFlavor(null);
   };
 
   const handleAddOtherProduct = (prod: Product) => {
@@ -511,20 +487,27 @@ export const POSPage: React.FC = () => {
 
               {/* Dynamic Helper Banner */}
               {selectedGelatoSize.scoops === 2 && (
-                <div className="mt-1.5 px-2.5 py-1 rounded-xl bg-[#FAF8EA] border border-[#C6BF81]/40 flex items-center justify-between text-xs font-medium text-[#364266]">
+                <div className="mt-1.5 px-2.5 py-1.5 rounded-xl bg-[#FAF8EA] border border-[#C6BF81]/40 flex items-center justify-between text-xs font-medium text-[#364266]">
                   {firstFlavor ? (
-                    <div className="flex items-center gap-1.5 truncate">
+                    <div className="flex items-center gap-1.5 truncate flex-1 min-w-0">
                       <span className="font-bold text-emerald-700 flex items-center gap-1 shrink-0 font-sans">
-                        <Check size={13} /> 1/2 {firstFlavor.name}
+                        <Check size={13} /> {firstFlavor.name}
                       </span>
                       <ArrowRight size={11} className="text-[#897863] shrink-0" />
-                      <span className="animate-pulse text-[#344268] font-semibold truncate text-[11px] font-sans">
-                        Toca el 2do sabor (o {firstFlavor.name} para doble)
+                      <span className="text-[#344268] font-semibold truncate text-[11px] font-sans">
+                        Toca el 2do sabor (o toca {firstFlavor.name} para 1 solo sabor)
                       </span>
+                      <button
+                        onClick={handleAddFirstFlavorSolo}
+                        className="ml-1 px-2 py-0.5 rounded-lg bg-[#364266] text-[#FEF3DE] text-[10px] font-bold shrink-0 font-sans hover:bg-[#242D49]"
+                        title="Agregar con 1 solo sabor"
+                      >
+                        ✓ Dejar 1 Sabor
+                      </button>
                     </div>
                   ) : (
                     <span className="text-[11px] font-sans">
-                      Paso 1 de 2: <strong className="text-[#364266]">Selecciona el primer sabor</strong>
+                      Paso 1: <strong className="text-[#364266]">Toca el sabor deseado</strong> <span className="text-gray-500 font-normal">(puedes combinar 2 o dejar 1 solo)</span>
                     </span>
                   )}
 
@@ -617,11 +600,6 @@ export const POSPage: React.FC = () => {
                         <p className="font-sans text-[11px] text-[#6B5E4F] not-italic line-clamp-1 mt-0.5 font-normal">
                           {flavor.description || 'Gelato artesanal'}
                         </p>
-                        {(flavor.id === 8 || flavor.name.toLowerCase().includes('maracuyá y corozo') || flavor.name.toLowerCase().includes('maracuya y corozo')) && (
-                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-[#242D49] text-[#FAF8EA] text-[10px] font-bold tracking-tight font-sans">
-                            🍨 Dúo • Solo Grande / Litro
-                          </span>
-                        )}
                       </div>
 
                       {isFirstSelected && (
@@ -1141,149 +1119,12 @@ export const POSPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Post-Payment Thermal Ticket Modal (Exact Siigo Invoice Template) */}
-      <AnimatePresence>
-        {lastOrder && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-[#364266]/10 text-center"
-            >
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3 text-2xl font-bold">
-                ✓
-              </div>
-              <h3 className="font-sans font-bold text-xl text-[#364266]">¡Venta Exitosa!</h3>
-              <p className="text-xs text-[#897863] font-sans">Documento de ingreso GIA-{lastOrder.id}</p>
-
-              {/* Thermal Receipt Preview (72mm Width for POS DIG-K200L) */}
-              <div
-                data-printable-receipt="true"
-                id="thermal-receipt-printable"
-                className="my-4 p-3 bg-white border border-gray-300 text-left font-mono text-[11px] text-[#111] space-y-2 shadow-sm max-h-[380px] overflow-y-auto w-full max-w-[72mm] mx-auto"
-              >
-                <div className="text-center pb-2 border-b border-gray-300">
-                  <div className="w-28 h-10 mx-auto mb-1 flex items-center justify-center">
-                    <img src="/logo/gia-logo-dark.png" alt="Gia" className="max-h-full object-contain" />
-                  </div>
-                  <p className="font-bold text-sm tracking-wider">GIACARTAGENA SAS</p>
-                  <p className="text-[10px]">NIT: 901961461-3</p>
-                  <p className="text-[10px]">Dir.: CALLE BALOCO CENTRO</p>
-                  <p className="text-[10px]">Cartagena - tel. 3007856068</p>
-                </div>
-
-                <div className="text-center py-1 border-b border-gray-300">
-                  <p className="font-bold text-xs">Documento de ingreso No. GIA-{lastOrder.id}</p>
-                  <p className="text-[10px] text-gray-600">Fecha: {new Date().toLocaleDateString('es-CO')}, {new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</p>
-                  <p className="text-[9px] text-gray-500 mt-0.5 leading-tight">
-                    Este documento no reemplaza la factura de venta ni el documento equivalente, es un soporte de uso contable.
-                  </p>
-                </div>
-
-                <div className="py-1 border-b border-dashed border-gray-300 text-[10px] space-y-0.5">
-                  <p><strong>Cliente:</strong> {lastOrder.customer.name}</p>
-                  <p><strong>C.C / NIT:</strong> {lastOrder.customer.doc}</p>
-                  <p><strong>Teléfono:</strong> {lastOrder.customer.phone || '000'}</p>
-                  <p><strong>Vendedor:</strong> {currentShift?.cashierName || 'Cajero Convención'}</p>
-                </div>
-
-                {/* Items Table */}
-                <div className="py-1 border-b border-dashed border-gray-300 space-y-1">
-                  <div className="flex justify-between font-bold text-[10px] text-gray-700">
-                    <span>Ít. Cant. Vr. Unit</span>
-                    <span>Valor</span>
-                  </div>
-                  {lastOrder.items.map((i: any, idx: number) => (
-                    <div key={idx} className="text-[10px]">
-                      <div className="flex justify-between">
-                        <span>{idx + 1} &nbsp; {i.quantity} UNI &nbsp; {formatPrice(i.price)}</span>
-                        <span className="font-bold">{formatPrice(i.price * i.quantity)}</span>
-                      </div>
-                      <p className="text-[9px] text-gray-600 pl-4">{i.name}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Totals & Impoconsumo */}
-                <div className="pt-1 text-right text-[10px] space-y-0.5">
-                  <div className="flex justify-between text-gray-600">
-                    <span>Total Ítems:</span>
-                    <span>{lastOrder.items.reduce((a: number, b: any) => a + b.quantity, 0)}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Total bruto:</span>
-                    <span>{formatPrice(Math.round(lastOrder.total / 1.08))}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Descuentos:</span>
-                    <span>$0,00</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Subtotal:</span>
-                    <span>{formatPrice(Math.round(lastOrder.total / 1.08))}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Impoconsumo 8%:</span>
-                    <span>{formatPrice(lastOrder.total - Math.round(lastOrder.total / 1.08))}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-xs pt-1 border-t border-gray-300">
-                    <span>Total a pagar:</span>
-                    <span>{formatPrice(lastOrder.total)}</span>
-                  </div>
-                </div>
-
-                {/* Payment Breakdown */}
-                <div className="pt-1 border-t border-dashed border-gray-300 text-[10px] space-y-0.5">
-                  <p className="font-bold">Métodos de pago:</p>
-                  <div className="flex justify-between">
-                    <span>
-                      {lastOrder.paymentMethod === 'cash' ? 'Efectivo:' :
-                       lastOrder.paymentMethod === 'card_debit' ? 'Tarjeta Débito:' :
-                       lastOrder.paymentMethod === 'card_credit' ? 'Tarjeta Crédito:' : 'QR Transferencia:'}
-                    </span>
-                    <span>{formatPrice(lastOrder.total)}</span>
-                  </div>
-                  {lastOrder.paymentMethod === 'cash' && (
-                    <>
-                      <div className="flex justify-between text-gray-600">
-                        <span>Total recibido:</span>
-                        <span>{formatPrice(lastOrder.cashReceived || lastOrder.total)}</span>
-                      </div>
-                      <div className="flex justify-between font-bold text-emerald-700">
-                        <span>Cambio:</span>
-                        <span>{formatPrice(lastOrder.cashChange || 0)}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="text-center pt-2 text-[9px] text-gray-500">
-                  Gia Gelatería Artesanal • Convención
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-2 print:hidden">
-                <button
-                  onClick={() => window.print()}
-                  className="w-full py-2.5 rounded-xl bg-[#364266] hover:bg-[#242D49] font-sans font-semibold text-xs text-[#FEF3DE] flex items-center justify-center gap-1.5 shadow-md"
-                >
-                  <Printer size={15} /> Imprimir Recibo (72mm)
-                </button>
-
-                <button
-                  onClick={() => setLastOrder(null)}
-                  className="w-full py-3 rounded-xl bg-gray-100 hover:bg-gray-200 font-sans font-semibold text-sm text-[#364266] flex items-center justify-center gap-1.5"
-                >
-                  <span>Siguiente Cliente ({countdown}s)</span>
-                  <ArrowRight size={15} />
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Post-Payment Print Modal (Siigo Inspired with Paper Size Selector) */}
+      <PrintModal
+        isOpen={!!lastOrder}
+        onClose={() => setLastOrder(null)}
+        order={lastOrder}
+      />
     </div>
   );
 };

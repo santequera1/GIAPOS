@@ -6,6 +6,7 @@ import { formatPrice, getColombiaTodayStr, getColombiaYesterdayStr, getColombiaN
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { PrintModal } from '@/components/PrintModal';
 
 const statusTabs: { label: string; status: OrderStatus | 'all' }[] = [
   { label: 'Todos', status: 'all' },
@@ -340,150 +341,12 @@ export const OrdersPage: React.FC = () => {
         </div>
       )}
 
-      {/* Official Thermal Invoice Modal (80mm / 72mm Thermal Print Ready) */}
-      <AnimatePresence>
-        {selectedInvoice && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-[#364266]/10 text-center"
-            >
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-100 print:hidden">
-                <span className="font-bold text-xs text-[#242D49]">Comprobante GIA-{selectedInvoice.id}</span>
-                <button onClick={() => setSelectedInvoice(null)} className="text-gray-400 hover:text-gray-600">
-                  <X size={18} />
-                </button>
-              </div>
-
-              {/* Thermal Invoice Ticket (72mm width for POS DIG-K200L) */}
-              <div
-                data-printable-receipt="true"
-                id="thermal-receipt-printable"
-                className="p-3 bg-white border border-gray-300 text-left font-mono text-[11px] text-[#111] space-y-2 shadow-sm max-h-[420px] overflow-y-auto w-full max-w-[72mm] mx-auto"
-              >
-                <div className="text-center pb-2 border-b border-gray-300">
-                  <div className="w-28 h-10 mx-auto mb-1 flex items-center justify-center">
-                    <img src="/logo/gia-logo-dark.png" alt="Gia" className="max-h-full object-contain" />
-                  </div>
-                  <p className="font-bold text-sm tracking-wider">GIACARTAGENA SAS</p>
-                  <p className="text-[10px]">NIT: 901961461-3</p>
-                  <p className="text-[10px]">Dir.: CALLE BALOCO CENTRO</p>
-                  <p className="text-[10px]">Cartagena - tel. 3007856068</p>
-                </div>
-
-                <div className="text-center py-1 border-b border-gray-300">
-                  <p className="font-bold text-xs">Documento de ingreso No. GIA-{selectedInvoice.id}</p>
-                  <p className="text-[10px] text-gray-600">
-                    Fecha: {new Date(selectedInvoice.createdAt).toLocaleDateString('es-CO')}, {new Date(selectedInvoice.createdAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                  <p className="text-[9px] text-gray-500 mt-0.5 leading-tight">
-                    Este documento no reemplaza la factura de venta ni el documento equivalente, es un soporte de uso contable.
-                  </p>
-                </div>
-
-                <div className="py-1 border-b border-dashed border-gray-300 text-[10px] space-y-0.5">
-                  <p><strong>Cliente:</strong> {selectedInvoice.customer?.name || 'Consumidor Final'}</p>
-                  <p><strong>C.C / NIT:</strong> {selectedInvoice.customer?.doc || '222222222222'}</p>
-                  <p><strong>Teléfono:</strong> {selectedInvoice.customer?.phone || '000'}</p>
-                  <p><strong>Vendedor:</strong> {currentShift?.cashierName || 'Elena C Vanegas'}</p>
-                </div>
-
-                {/* Items Table */}
-                <div className="py-1 border-b border-dashed border-gray-300 space-y-1">
-                  <div className="flex justify-between font-bold text-[10px] text-gray-700">
-                    <span>Ít. Cant. Vr. Unit</span>
-                    <span>Valor</span>
-                  </div>
-                  {selectedInvoice.items.map((i, idx) => (
-                    <div key={idx} className="text-[10px]">
-                      <div className="flex justify-between">
-                        <span>{idx + 1} &nbsp; {i.quantity} UNI &nbsp; {formatPrice(i.price)}</span>
-                        <span className="font-bold">{formatPrice(i.price * i.quantity)}</span>
-                      </div>
-                      <p className="text-[9px] text-gray-600 pl-4">{i.name}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Totals & Impoconsumo 8% */}
-                <div className="pt-1 text-right text-[10px] space-y-0.5">
-                  <div className="flex justify-between text-gray-600">
-                    <span>Total Ítems:</span>
-                    <span>{selectedInvoice.items.reduce((a: number, b: any) => a + b.quantity, 0)}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Total bruto:</span>
-                    <span>{formatPrice(Math.round(selectedInvoice.total / 1.08))}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Descuentos:</span>
-                    <span>$0,00</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Subtotal:</span>
-                    <span>{formatPrice(Math.round(selectedInvoice.total / 1.08))}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Impoconsumo 8%:</span>
-                    <span>{formatPrice(selectedInvoice.total - Math.round(selectedInvoice.total / 1.08))}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-xs pt-1 border-t border-gray-300">
-                    <span>Total a pagar:</span>
-                    <span>{formatPrice(selectedInvoice.total)}</span>
-                  </div>
-                </div>
-
-                {/* Payment Breakdown */}
-                <div className="pt-1 border-t border-dashed border-gray-300 text-[10px] space-y-0.5">
-                  <p className="font-bold">Métodos de pago:</p>
-                  <div className="flex justify-between">
-                    <span>
-                      {selectedInvoice.paymentMethod === 'cash' ? 'Efectivo:' :
-                       selectedInvoice.paymentMethod === 'card_debit' ? 'Tarjeta Débito:' :
-                       selectedInvoice.paymentMethod === 'card_credit' ? 'Tarjeta Crédito:' : 'QR Transferencia:'}
-                    </span>
-                    <span>{formatPrice(selectedInvoice.total)}</span>
-                  </div>
-                  {selectedInvoice.paymentMethod === 'cash' && (
-                    <>
-                      <div className="flex justify-between text-gray-600">
-                        <span>Total recibido:</span>
-                        <span>{formatPrice(selectedInvoice.cashReceived || selectedInvoice.total)}</span>
-                      </div>
-                      <div className="flex justify-between font-bold text-emerald-700">
-                        <span>Cambio:</span>
-                        <span>{formatPrice(selectedInvoice.cashChange || 0)}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="text-center pt-2 text-[9px] text-gray-500">
-                  Gia Gelatería Artesanal • Cartagena
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="mt-4 flex gap-2 print:hidden">
-                <button
-                  onClick={() => window.print()}
-                  className="flex-1 py-2.5 rounded-xl bg-[#364266] hover:bg-[#242D49] text-[#FEF3DE] font-semibold text-xs flex items-center justify-center gap-1.5 shadow-md font-sans"
-                >
-                  <Printer size={15} /> Imprimir Comprobante (72mm)
-                </button>
-                <button
-                  onClick={() => setSelectedInvoice(null)}
-                  className="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs font-sans"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Official Thermal Invoice Print Modal */}
+      <PrintModal
+        isOpen={!!selectedInvoice}
+        onClose={() => setSelectedInvoice(null)}
+        order={selectedInvoice}
+      />
     </div>
   );
 };

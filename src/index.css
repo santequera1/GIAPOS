@@ -179,55 +179,12 @@
   animation: pulse-glow 2.5s ease-in-out infinite;
 }
 
-/* Thermal Printing: 80mm roll, 72mm printable width (POS DIG-K200L) */
+/* Thermal Printing Support */
 @media print {
   @page {
-    size: 80mm auto;
     margin: 0mm;
   }
-  
-  html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #fff !important;
-    color: #000 !important;
-    width: 80mm !important;
-    min-height: auto !important;
-  }
-  
-  /* Hide all regular web UI elements */
-  body * {
-    visibility: hidden;
-  }
-  
-  /* Show only thermal receipt container */
-  #thermal-receipt-printable,
-  [data-printable-receipt="true"],
-  [data-printable-receipt="true"] * {
-    visibility: visible !important;
-  }
-  
-  #thermal-receipt-printable,
-  [data-printable-receipt="true"] {
-    position: fixed !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 72mm !important;
-    max-width: 72mm !important;
-    margin: 0 auto !important;
-    padding: 2mm 1mm !important;
-    background: #fff !important;
-    color: #000 !important;
-    box-shadow: none !important;
-    border: none !important;
-    font-size: 11px !important;
-    line-height: 1.25 !important;
-    display: block !important;
-    z-index: 999999 !important;
-  }
-
   .no-print,
-  button,
   .print\:hidden {
     display: none !important;
   }
