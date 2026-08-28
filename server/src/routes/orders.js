@@ -124,6 +124,13 @@ router.post('/', (req, res) => {
     }
   }
 
+  // Auto-link to active open shift if shiftId is not provided or zero
+  let effectiveShiftId = Number(shiftId);
+  if (!effectiveShiftId || effectiveShiftId <= 0) {
+    const openShift = db.prepare("SELECT id FROM cash_shifts WHERE status = 'open' ORDER BY opened_at DESC LIMIT 1").get();
+    effectiveShiftId = openShift ? openShift.id : null;
+  }
+
   const result = db.prepare(`
     INSERT INTO orders (
       type, status, customer_name, customer_doc, customer_email, customer_phone, customer_address,
@@ -140,7 +147,7 @@ router.post('/', (req, res) => {
     cashReceived, cashChange,
     receiptImage || null,
     notes,
-    shiftId || null,
+    effectiveShiftId,
     splitJson
   );
 

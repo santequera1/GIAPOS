@@ -20,6 +20,7 @@ import {
   Layers,
   Percent,
   Tag,
+  Pencil,
 } from 'lucide-react';
 import { useStore, type OrderItem, type PaymentMethod, type Product, type PaymentSplit } from '@/store/useStore';
 import { formatPrice } from '@/lib/format';
@@ -40,14 +41,14 @@ export interface GelatoFormat {
 }
 
 const GELATO_FORMATS: GelatoFormat[] = [
-  { id: 'vaso_pequeno', name: 'Vaso Pequeño', container: 'Vaso', capacity: '4 oz', scoops: 1, price: 16000, desc: '1 sabor (4 oz)', emoji: '🍨' },
-  { id: 'vaso_grande',  name: 'Vaso Grande',  container: 'Vaso', capacity: '6 oz', scoops: 2, price: 22000, desc: '2 sabores (6 oz)', emoji: '🍨' },
-  { id: 'cono_pequeno', name: 'Cono Pequeño', container: 'Cono', capacity: 'Cono', scoops: 1, price: 16000, desc: '1 sabor en cono', emoji: '🍦' },
-  { id: 'cono_grande',  name: 'Cono Grande',  container: 'Cono', capacity: 'Cono', scoops: 2, price: 22000, desc: '2 sabores en cono', emoji: '🍦' },
+  { id: 'vaso_pequeno', name: 'Vaso Pequeño', container: 'Vaso', capacity: '4 oz', scoops: 1, price: 15000, desc: '1 sabor (4 oz)', emoji: '🍨' },
+  { id: 'vaso_grande',  name: 'Vaso Grande',  container: 'Vaso', capacity: '6 oz', scoops: 2, price: 21000, desc: '2 sabores (6 oz)', emoji: '🍨' },
+  { id: 'cono_pequeno', name: 'Cono Pequeño', container: 'Cono', capacity: 'Cono', scoops: 1, price: 15000, desc: '1 sabor en cono', emoji: '🍦' },
+  { id: 'cono_grande',  name: 'Cono Grande',  container: 'Cono', capacity: 'Cono', scoops: 2, price: 21000, desc: '2 sabores en cono', emoji: '🍦' },
   { id: 'litro',        name: 'Litro',        container: 'Familiar', capacity: '1000 ml', scoops: 2, price: 70000, desc: '2 sabores (familiar)', emoji: '🧊' },
 ];
 
-const QUICK_CASH_AMOUNTS = [16000, 20000, 22000, 50000, 100000];
+const QUICK_CASH_AMOUNTS = [15000, 20000, 21000, 50000, 100000];
 
 interface TabOrder {
   id: string;
@@ -114,6 +115,8 @@ export const POSPage: React.FC = () => {
 
   const [activeTabId, setActiveTabId] = useState<string>(() => tabs[0]?.id || 'tab-1');
   const [showDiscountInput, setShowDiscountInput] = useState(false);
+  const [editingTabId, setEditingTabId] = useState<string | null>(null);
+  const [editingTabName, setEditingTabName] = useState<string>('');
 
   // Active Tab Data
   const currentTab = useMemo(() => {
@@ -140,6 +143,81 @@ export const POSPage: React.FC = () => {
       localStorage.setItem(STORAGE_TABS_KEY, JSON.stringify(tabs));
     } catch (e) {}
   }, [tabs]);
+
+  // Tab Helper Mutators
+  const updateActiveTab = (updates: Partial<TabOrder>) => {
+    setTabs(prev =>
+      prev.map(t => (t.id === activeTabId ? { ...t, ...updates } : t))
+    );
+  };
+
+  const startEditingTab = (tab: TabOrder) => {
+    setEditingTabId(tab.id);
+    setEditingTabName(tab.name);
+  };
+
+  const saveEditingTab = () => {
+    if (editingTabId && editingTabName.trim()) {
+      setTabs(prev =>
+        prev.map(t => (t.id === editingTabId ? { ...t, name: editingTabName.trim() } : t))
+      );
+    }
+    setEditingTabId(null);
+  };
+
+  const handleAddNewTab = () => {
+    const nextNum = tabs.length + 1;
+    const newTab: TabOrder = {
+      id: `tab-${Date.now()}`,
+      name: `Cuenta ${nextNum}`,
+      cart: [],
+      customer: { ...DEFAULT_CUSTOMER },
+      notes: '',
+      paymentMethod: 'cash',
+      cashReceived: '',
+      discountType: 'percent',
+      discountValue: 0,
+    };
+    setTabs(prev => [...prev, newTab]);
+    setActiveTabId(newTab.id);
+    toast.success(`Nueva cuenta abierta: ${newTab.name}`);
+  };
+
+  const handleCloseTab = (tabId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const tabToClose = tabs.find(t => t.id === tabId);
+    if (!tabToClose) return;
+
+    if (tabToClose.cart.length > 0) {
+      if (!window.confirm(`¿Deseas descartar los ítems de "${tabToClose.name}"?`)) {
+        return;
+      }
+    }
+
+    if (tabs.length === 1) {
+      // Reset the single tab
+      const resetTab: TabOrder = {
+        id: 'tab-1',
+        name: 'Cuenta 1',
+        cart: [],
+        customer: { ...DEFAULT_CUSTOMER },
+        notes: '',
+        paymentMethod: 'cash',
+        cashReceived: '',
+        discountType: 'percent',
+        discountValue: 0,
+      };
+      setTabs([resetTab]);
+      setActiveTabId('tab-1');
+      return;
+    }
+
+    const remaining = tabs.filter(t => t.id !== tabId);
+    setTabs(remaining);
+    if (activeTabId === tabId) {
+      setActiveTabId(remaining[0].id);
+    }
+  };
 
   // POS State
   const [catalogTab, setCatalogTab] = useState<'gelato' | number | 'custom'>('gelato');
@@ -187,63 +265,6 @@ export const POSPage: React.FC = () => {
       }
     }
   }, [total, paymentMethod]);
-
-  // Tab Helper Mutators
-  const updateActiveTab = (updates: Partial<TabOrder>) => {
-    setTabs(prev =>
-      prev.map(t => (t.id === activeTabId ? { ...t, ...updates } : t))
-    );
-  };
-
-  const handleAddNewTab = () => {
-    const nextNum = tabs.length + 1;
-    const newTab: TabOrder = {
-      id: `tab-${Date.now()}`,
-      name: `Cuenta ${nextNum}`,
-      cart: [],
-      customer: { ...DEFAULT_CUSTOMER },
-      notes: '',
-      paymentMethod: 'cash',
-      cashReceived: '',
-    };
-    setTabs(prev => [...prev, newTab]);
-    setActiveTabId(newTab.id);
-    toast.success(`Nueva cuenta abierta: ${newTab.name}`);
-  };
-
-  const handleCloseTab = (tabId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const tabToClose = tabs.find(t => t.id === tabId);
-    if (!tabToClose) return;
-
-    if (tabToClose.cart.length > 0) {
-      if (!window.confirm(`¿Deseas descartar los ítems de "${tabToClose.name}"?`)) {
-        return;
-      }
-    }
-
-    if (tabs.length === 1) {
-      // Reset the single tab
-      const resetTab: TabOrder = {
-        id: 'tab-1',
-        name: 'Cuenta 1',
-        cart: [],
-        customer: { ...DEFAULT_CUSTOMER },
-        notes: '',
-        paymentMethod: 'cash',
-        cashReceived: '',
-      };
-      setTabs([resetTab]);
-      setActiveTabId('tab-1');
-      return;
-    }
-
-    const remaining = tabs.filter(t => t.id !== tabId);
-    setTabs(remaining);
-    if (activeTabId === tabId) {
-      setActiveTabId(remaining[0].id);
-    }
-  };
 
   // Products filtering
   const gelatoFlavors = useMemo(() => {
@@ -901,19 +922,55 @@ export const POSPage: React.FC = () => {
 
           {tabs.map((tab) => {
             const isActive = tab.id === activeTabId;
+            const isEditing = editingTabId === tab.id;
             const itemCount = tab.cart.reduce((a, b) => a + b.quantity, 0);
             return (
               <div
                 key={tab.id}
-                onClick={() => setActiveTabId(tab.id)}
+                onClick={() => {
+                  if (!isEditing) setActiveTabId(tab.id);
+                }}
+                onDoubleClick={() => startEditingTab(tab)}
                 className={cn(
-                  'px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer flex items-center gap-1.5 transition-all select-none whitespace-nowrap',
+                  'px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer flex items-center gap-1.5 transition-all select-none whitespace-nowrap group',
                   isActive
                     ? 'bg-[#FEF3DE] text-[#242D49] font-bold shadow-md'
                     : 'bg-white/10 text-[#FEF3DE]/80 hover:bg-white/20'
                 )}
               >
-                <span>{tab.name}</span>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    autoFocus
+                    value={editingTabName}
+                    onChange={(e) => setEditingTabName(e.target.value)}
+                    onBlur={saveEditingTab}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveEditingTab();
+                      if (e.key === 'Escape') setEditingTabId(null);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-24 px-1.5 py-0.5 text-xs text-[#242D49] bg-white rounded-md border border-[#C6BF81] outline-none font-bold"
+                  />
+                ) : (
+                  <span className="flex items-center gap-1">
+                    {tab.name}
+                    {isActive && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startEditingTab(tab);
+                        }}
+                        className="opacity-60 hover:opacity-100 p-0.5"
+                        title="Renombrar cuenta (Ej. Mesa 4, Carlos...)"
+                      >
+                        <Pencil size={10} />
+                      </button>
+                    )}
+                  </span>
+                )}
+
                 {itemCount > 0 && (
                   <span className={cn(
                     'px-1.5 py-0.2 text-[10px] rounded-full font-bold',
@@ -957,9 +1014,32 @@ export const POSPage: React.FC = () => {
               <span>Sabores</span>
             </button>
             <ShoppingCart size={16} className="text-[#364266]" />
-            <h2 className="font-sans font-bold text-sm text-[#364266]">
-              {currentTab.name} ({cart.reduce((a, b) => a + b.quantity, 0)})
-            </h2>
+
+            {editingTabId === currentTab.id ? (
+              <input
+                type="text"
+                autoFocus
+                value={editingTabName}
+                onChange={(e) => setEditingTabName(e.target.value)}
+                onBlur={saveEditingTab}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveEditingTab();
+                  if (e.key === 'Escape') setEditingTabId(null);
+                }}
+                className="px-2 py-0.5 text-sm font-bold text-[#242D49] bg-white rounded-lg border border-[#C6BF81] outline-none"
+              />
+            ) : (
+              <div
+                className="flex items-center gap-1.5 cursor-pointer group"
+                onClick={() => startEditingTab(currentTab)}
+                title="Clic para renombrar cuenta / cliente"
+              >
+                <h2 className="font-sans font-bold text-sm text-[#364266] group-hover:underline">
+                  {currentTab.name} ({cart.reduce((a, b) => a + b.quantity, 0)})
+                </h2>
+                <Pencil size={12} className="text-[#897863] opacity-60 group-hover:opacity-100 transition-opacity" />
+              </div>
+            )}
           </div>
 
           {cart.length > 0 && (
@@ -1431,6 +1511,7 @@ export const POSPage: React.FC = () => {
                           <div
                             key={c.id}
                             onClick={() => {
+                              const isDef = currentTab.name.startsWith('Cuenta');
                               updateActiveTab({
                                 customer: {
                                   name: c.name,
@@ -1439,6 +1520,7 @@ export const POSPage: React.FC = () => {
                                   phone: c.phone || '',
                                   isElectronicInvoice: true,
                                 },
+                                ...(isDef ? { name: c.name.split(' ')[0] } : {})
                               });
                               setCustSearchQuery('');
                               setShowCustomerModal(false);

@@ -3,16 +3,16 @@ const { getDb } = require('../db');
 
 const router = Router();
 
-// Calculate live stats for an open shift
+// Calculate live stats for a shift (STRICTLY isolated by shift_id)
 function getShiftLiveStats(db, shift) {
-  const filter = shift && shift.id ? 'AND shift_id = ' + shift.id : "AND date(created_at) = date('now', '-5 hours')";
+  if (!shift || !shift.id) return null;
 
-  // Sales totals including split payments
+  // Sales totals strictly for this shift
   const orders = db.prepare(`
     SELECT payment_method, total, payment_split
     FROM orders
-    WHERE status != 'cancelled' ${filter}
-  `).all();
+    WHERE status != 'cancelled' AND shift_id = ?
+  `).all(shift.id);
 
   let cashSales = 0;
   let debitSales = 0;
@@ -46,9 +46,8 @@ function getShiftLiveStats(db, shift) {
     else if (o.payment_method === 'transfer') transferSales += o.total;
   }
 
-  // Cash Movements (Withdrawals / Deposits)
-  const movementFilter = shift && shift.id ? 'WHERE shift_id = ' + shift.id : "WHERE date(created_at) = date('now', '-5 hours')";
-  const movements = db.prepare(`SELECT * FROM cash_movements ${movementFilter} ORDER BY created_at DESC`).all();
+  // Cash Movements (Withdrawals / Deposits) strictly for this shift
+  const movements = db.prepare(`SELECT * FROM cash_movements WHERE shift_id = ? ORDER BY created_at DESC`).all(shift.id);
   let totalWithdrawals = 0;
   let totalDeposits = 0;
 
@@ -57,7 +56,7 @@ function getShiftLiveStats(db, shift) {
     else if (m.type === 'deposit') totalDeposits += m.amount;
   }
 
-  // Flavors / products breakdown
+  // Flavors / products breakdown strictly for this shift
   const flavorStats = db.prepare(`
     SELECT
       oi.name,
@@ -67,16 +66,17 @@ function getShiftLiveStats(db, shift) {
       SUM(oi.quantity * oi.price) as revenue
     FROM order_items oi
     JOIN orders o ON o.id = oi.order_id
-    WHERE o.status != 'cancelled' ${filter}
+    WHERE o.status != 'cancelled' AND o.shift_id = ?
     GROUP BY oi.name, oi.size, oi.flavors
     ORDER BY qty DESC
-  `).all();
+  `).all(shift.id);
 
-  const initialCash = (shift && shift.initial_cash) || 0;
+  const initialCash = shift.initial_cash !== undefined ? shift.initial_cash : (shift.initialCash || 0);
   const expectedCash = initialCash + cashSales + totalDeposits - totalWithdrawals;
 
   return {
     ...shift,
+    cashierName: shift.cashier_name || shift.cashierName || 'Cajero',
     initialCash,
     cashSales,
     debitSales,
@@ -92,17 +92,13 @@ function getShiftLiveStats(db, shift) {
   };
 }
 
-// Get current open shift or today's active shift
+// Get current open shift
 router.get('/current', (req, res) => {
   const db = getDb();
-  let shift = db.prepare("SELECT * FROM cash_shifts WHERE status = 'open' ORDER BY opened_at DESC LIMIT 1").get();
+  const shift = db.prepare("SELECT * FROM cash_shifts WHERE status = 'open' ORDER BY opened_at DESC LIMIT 1").get();
 
   if (!shift) {
-    const result = db.prepare(`
-      INSERT INTO cash_shifts (user_id, cashier_name, opened_at, initial_cash, status, notes)
-      VALUES (?, ?, datetime('now', '-5 hours'), 100000, 'open', 'Turno Convención')
-    `).run(req.user?.id || 1, req.user?.name || 'Cajero');
-    shift = db.prepare('SELECT * FROM cash_shifts WHERE id = ?').get(result.lastInsertRowid);
+    return res.json(null);
   }
 
   const live = getShiftLiveStats(db, shift);
