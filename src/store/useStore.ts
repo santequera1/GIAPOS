@@ -3,8 +3,25 @@ import { api, setToken } from '@/lib/api';
 
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'shipped' | 'delivered' | 'cancelled';
 export type OrderType = 'dine-in' | 'pickup' | 'delivery';
-export type PaymentMethod = 'cash' | 'card_debit' | 'card_credit' | 'card' | 'transfer';
+export type PaymentMethod = 'cash' | 'card_debit' | 'card_credit' | 'card' | 'transfer' | 'mixed';
 export type UserRole = 'admin' | 'cashier' | 'kitchen';
+
+export interface PaymentSplit {
+  method1: PaymentMethod;
+  amount1: number;
+  method2: PaymentMethod;
+  amount2: number;
+}
+
+export interface CashMovement {
+  id: number;
+  shift_id: number;
+  type: 'withdrawal' | 'deposit';
+  amount: number;
+  reason: string;
+  cashier_name?: string;
+  created_at: string;
+}
 
 export interface Category {
   id: number;
@@ -76,6 +93,7 @@ export interface Order {
   discount?: number;
   total: number;
   paymentMethod: PaymentMethod;
+  paymentSplit?: PaymentSplit;
   paymentStatus: 'pending' | 'paid';
   cashReceived?: number;
   cashChange?: number;
@@ -102,6 +120,9 @@ export interface CashShift {
   transferSales: number;
   totalSales: number;
   totalOrders: number;
+  totalWithdrawals?: number;
+  totalDeposits?: number;
+  movements?: CashMovement[];
   status: 'open' | 'closed';
   notes?: string;
   flavorStats?: Array<{ name: string; size?: string; flavors?: string; qty: number; revenue: number }>;
@@ -156,6 +177,7 @@ interface AppState {
   // Shifts
   openShift: (initialCash: number, cashierName?: string, notes?: string) => Promise<void>;
   closeShift: (actualCash: number, notes?: string) => Promise<CashShift>;
+  addCashMovement: (amount: number, reason: string, type?: 'withdrawal' | 'deposit') => Promise<void>;
 
   // Products
   addProduct: (product: Omit<Product, 'id'>) => void;
@@ -397,6 +419,15 @@ export const useStore = create<AppState>((set, get) => ({
     const shift = await api.closeShift({ actualCash, notes });
     set({ currentShift: null });
     return shift;
+  },
+
+  addCashMovement: async (amount, reason, type = 'withdrawal') => {
+    const res = await api.addCashMovement({ amount, reason, type });
+    if (res.shift) {
+      set({ currentShift: res.shift });
+    } else {
+      get().refreshCurrentShift();
+    }
   },
 
   addProduct: (product) => {

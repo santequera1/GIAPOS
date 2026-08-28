@@ -217,10 +217,25 @@ export const PrintModal: React.FC<PrintModalProps> = ({ isOpen, onClose, order }
               <span>TOTAL A PAGAR:</span>
               <span>${formatPrice(total)}</span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 10px; margin-top: 3px; color: #444;">
-              <span>Método de Pago:</span>
-              <span class="font-bold">${order.paymentMethod === 'cash' ? 'Efectivo' : order.paymentMethod === 'card_debit' ? 'Tarjeta Débito' : order.paymentMethod === 'card_credit' ? 'Tarjeta Crédito' : order.paymentMethod === 'transfer' ? 'QR / Transferencia' : 'Tarjeta'}</span>
-            </div>
+            ${order.paymentMethod === 'mixed' || order.paymentSplit ? `
+              <div style="margin-top: 3px; font-size: 10px; color: #444;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Método de Pago:</span>
+                  <span class="font-bold">Pago Mixto / Combinado</span>
+                </div>
+                ${order.paymentSplit ? `
+                  <div style="padding-left: 8px; font-size: 9px; color: #333; margin-top: 2px;">
+                    <div>• ${order.paymentSplit.method1 === 'cash' ? 'Efectivo' : order.paymentSplit.method1 === 'card_debit' ? 'Tarjeta Débito' : order.paymentSplit.method1 === 'card_credit' ? 'Tarjeta Crédito' : order.paymentSplit.method1 === 'transfer' ? 'QR / Transferencia' : 'Tarjeta'}: ${formatPrice(order.paymentSplit.amount1)}</div>
+                    <div>• ${order.paymentSplit.method2 === 'cash' ? 'Efectivo' : order.paymentSplit.method2 === 'card_debit' ? 'Tarjeta Débito' : order.paymentSplit.method2 === 'card_credit' ? 'Tarjeta Crédito' : order.paymentSplit.method2 === 'transfer' ? 'QR / Transferencia' : 'Tarjeta'}: ${formatPrice(order.paymentSplit.amount2)}</div>
+                  </div>
+                ` : ''}
+              </div>
+            ` : `
+              <div style="display: flex; justify-content: space-between; font-size: 10px; margin-top: 3px; color: #444;">
+                <span>Método de Pago:</span>
+                <span class="font-bold">${order.paymentMethod === 'cash' ? 'Efectivo' : order.paymentMethod === 'card_debit' ? 'Tarjeta Débito' : order.paymentMethod === 'card_credit' ? 'Tarjeta Crédito' : order.paymentMethod === 'transfer' ? 'QR / Transferencia' : 'Tarjeta'}</span>
+              </div>
+            `}
             ${order.paymentMethod === 'cash' && order.cashReceived ? `
               <div style="display: flex; justify-content: space-between; font-size: 9.5px; color: #555;">
                 <span>Recibido:</span>
@@ -383,6 +398,30 @@ export const PrintModal: React.FC<PrintModalProps> = ({ isOpen, onClose, order }
               <div className="flex justify-between font-bold text-xs pt-1 border-t border-gray-300 text-[#242D49]">
                 <span>TOTAL:</span>
                 <span>{formatPrice(total)}</span>
+              </div>
+              <div className="pt-1 text-[10px] text-gray-600">
+                <div className="flex justify-between">
+                  <span>Pago:</span>
+                  <span className="font-semibold text-gray-800">
+                    {order.paymentMethod === 'mixed' || order.paymentSplit
+                      ? 'Mixto / Combinado'
+                      : order.paymentMethod === 'cash'
+                      ? 'Efectivo'
+                      : order.paymentMethod === 'card_debit'
+                      ? 'T. Débito'
+                      : order.paymentMethod === 'card_credit'
+                      ? 'T. Crédito'
+                      : order.paymentMethod === 'transfer'
+                      ? 'QR / Nequi'
+                      : 'Tarjeta'}
+                  </span>
+                </div>
+                {order.paymentSplit && (
+                  <div className="text-[9px] text-gray-500 pl-2 mt-0.5 space-y-0.5">
+                    <div>• {order.paymentSplit.method1 === 'cash' ? 'Efectivo' : order.paymentSplit.method1 === 'card_debit' ? 'T. Débito' : order.paymentSplit.method1 === 'card_credit' ? 'T. Crédito' : 'Transferencia'}: {formatPrice(order.paymentSplit.amount1)}</div>
+                    <div>• {order.paymentSplit.method2 === 'cash' ? 'Efectivo' : order.paymentSplit.method2 === 'card_debit' ? 'T. Débito' : order.paymentSplit.method2 === 'card_credit' ? 'T. Crédito' : 'Transferencia'}: {formatPrice(order.paymentSplit.amount2)}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

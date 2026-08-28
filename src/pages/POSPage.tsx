@@ -10,28 +10,69 @@ import {
   QrCode,
   Sparkles,
   User,
-  Printer,
   Search,
   X,
   ArrowRight,
   ArrowLeft,
   EyeOff,
   Eye,
+  Shuffle,
+  Layers,
 } from 'lucide-react';
-import { useStore, type OrderItem, type PaymentMethod, type Product } from '@/store/useStore';
+import { useStore, type OrderItem, type PaymentMethod, type Product, type PaymentSplit } from '@/store/useStore';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { PrintModal } from '@/components/PrintModal';
 
-const GELATO_SIZES = [
-  { id: 'pequeno', name: 'Pequeño', scoops: 1, price: 15000, desc: '1 sabor', emoji: '🍦' },
-  { id: 'grande',  name: 'Grande',  scoops: 2, price: 21000, desc: '2 sabores', emoji: '🍨' },
-  { id: 'litro',   name: 'Litro',   scoops: 2, price: 70000, desc: '2 sabores (familiar)', emoji: '🧊' },
+export interface GelatoFormat {
+  id: string;
+  name: string;
+  container: 'Vaso' | 'Cono' | 'Familiar';
+  capacity: string;
+  scoops: number;
+  price: number;
+  desc: string;
+  emoji: string;
+}
+
+const GELATO_FORMATS: GelatoFormat[] = [
+  { id: 'vaso_pequeno', name: 'Vaso Pequeño', container: 'Vaso', capacity: '4 oz', scoops: 1, price: 15000, desc: '1 sabor (4 oz)', emoji: '🍨' },
+  { id: 'vaso_grande',  name: 'Vaso Grande',  container: 'Vaso', capacity: '6 oz', scoops: 2, price: 21000, desc: '2 sabores (6 oz)', emoji: '🍨' },
+  { id: 'cono_pequeno', name: 'Cono Pequeño', container: 'Cono', capacity: 'Cono', scoops: 1, price: 15000, desc: '1 sabor en cono', emoji: '🍦' },
+  { id: 'cono_grande',  name: 'Cono Grande',  container: 'Cono', capacity: 'Cono', scoops: 2, price: 21000, desc: '2 sabores en cono', emoji: '🍦' },
+  { id: 'litro',        name: 'Litro',        container: 'Familiar', capacity: '1000 ml', scoops: 2, price: 70000, desc: '2 sabores (familiar)', emoji: '🧊' },
 ];
 
 const QUICK_CASH_AMOUNTS = [15000, 20000, 50000, 100000];
+
+interface TabOrder {
+  id: string;
+  name: string;
+  cart: OrderItem[];
+  customer: {
+    name: string;
+    doc: string;
+    email: string;
+    phone: string;
+    isElectronicInvoice: boolean;
+  };
+  notes: string;
+  paymentMethod: PaymentMethod;
+  paymentSplit?: PaymentSplit;
+  cashReceived: string;
+}
+
+const DEFAULT_CUSTOMER = {
+  name: 'Consumidor Final',
+  doc: '222222222222',
+  email: '',
+  phone: '3000000000',
+  isElectronicInvoice: false,
+};
+
+const STORAGE_TABS_KEY = 'giapos_held_tabs_v1';
 
 export const POSPage: React.FC = () => {
   const {
@@ -40,103 +81,258 @@ export const POSPage: React.FC = () => {
     customers,
     addOrder,
     currentShift,
-    businessName,
-    businessSlogan,
     toggleProductAvailability,
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'gelato' | number | 'custom'>('gelato');
-  const [selectedGelatoSize, setSelectedGelatoSize] = useState<typeof GELATO_SIZES[0]>(GELATO_SIZES[0]);
+  // Tabs / Precuentas State
+  const [tabs, setTabs] = useState<TabOrder[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_TABS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [
+      {
+        id: 'tab-1',
+        name: 'Cuenta 1',
+        cart: [],
+        customer: { ...DEFAULT_CUSTOMER },
+        notes: '',
+        paymentMethod: 'cash',
+        cashReceived: '',
+      },
+    ];
+  });
+
+  const [activeTabId, setActiveTabId] = useState<string>(() => tabs[0]?.id || 'tab-1');
+
+  // Active Tab Data
+  const currentTab = useMemo(() => {
+    return tabs.find(t => t.id === activeTabId) || tabs[0];
+  }, [tabs, activeTabId]);
+
+  const cart = currentTab.cart;
+  const customer = currentTab.customer;
+  const paymentMethod = currentTab.paymentMethod;
+  const paymentSplit = currentTab.paymentSplit || {
+    method1: 'cash',
+    amount1: 0,
+    method2: 'card_debit',
+    amount2: 0,
+  };
+  const cashReceived = currentTab.cashReceived;
+  const orderNotes = currentTab.notes;
+
+  // Persist tabs
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_TABS_KEY, JSON.stringify(tabs));
+    } catch (e) {}
+  }, [tabs]);
+
+  // POS State
+  const [catalogTab, setCatalogTab] = useState<'gelato' | number | 'custom'>('gelato');
+  const [selectedFormat, setSelectedFormat] = useState<GelatoFormat>(GELATO_FORMATS[0]);
   const [firstFlavor, setFirstFlavor] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileView, setMobileView] = useState<'catalog' | 'cart'>('catalog');
-  const [cart, setCart] = useState<OrderItem[]>([]);
-  const [discountPercent] = useState<number>(0);
 
-  const [customer, setCustomer] = useState({
-    name: 'Consumidor Final',
-    doc: '222222222222',
-    email: '',
-    phone: '3000000000',
-    isElectronicInvoice: false,
-  });
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [custSearchQuery, setCustSearchQuery] = useState('');
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
-  const [cashReceived, setCashReceived] = useState<string>('');
-  const [orderNotes, setOrderNotes] = useState<string>('');
   const [customItem, setCustomItem] = useState({ name: '', price: '' });
   const [lastOrder, setLastOrder] = useState<any | null>(null);
   const [countdown, setCountdown] = useState<number>(3);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Totals Calculation
   const subtotal = useMemo(() => cart.reduce((acc, item) => acc + item.price * item.quantity, 0), [cart]);
-  const discountAmount = useMemo(() => Math.round((subtotal * discountPercent) / 100), [subtotal, discountPercent]);
-  const total = Math.max(0, subtotal - discountAmount);
+  const total = subtotal;
   const numericCash = Number(cashReceived) || 0;
   const change = paymentMethod === 'cash' && numericCash > 0 ? numericCash - total : 0;
 
+  // Auto-sync split payment when total changes or split is selected
+  useEffect(() => {
+    if (paymentMethod === 'mixed') {
+      const half = Math.round(total / 2);
+      if (!currentTab.paymentSplit || currentTab.paymentSplit.amount1 + currentTab.paymentSplit.amount2 !== total) {
+        updateActiveTab({
+          paymentSplit: {
+            method1: currentTab.paymentSplit?.method1 || 'cash',
+            amount1: currentTab.paymentSplit?.amount1 || half,
+            method2: currentTab.paymentSplit?.method2 || 'card_debit',
+            amount2: total - (currentTab.paymentSplit?.amount1 || half),
+          },
+        });
+      }
+    }
+  }, [total, paymentMethod]);
+
+  // Tab Helper Mutators
+  const updateActiveTab = (updates: Partial<TabOrder>) => {
+    setTabs(prev =>
+      prev.map(t => (t.id === activeTabId ? { ...t, ...updates } : t))
+    );
+  };
+
+  const handleAddNewTab = () => {
+    const nextNum = tabs.length + 1;
+    const newTab: TabOrder = {
+      id: `tab-${Date.now()}`,
+      name: `Cuenta ${nextNum}`,
+      cart: [],
+      customer: { ...DEFAULT_CUSTOMER },
+      notes: '',
+      paymentMethod: 'cash',
+      cashReceived: '',
+    };
+    setTabs(prev => [...prev, newTab]);
+    setActiveTabId(newTab.id);
+    toast.success(`Nueva cuenta abierta: ${newTab.name}`);
+  };
+
+  const handleCloseTab = (tabId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const tabToClose = tabs.find(t => t.id === tabId);
+    if (!tabToClose) return;
+
+    if (tabToClose.cart.length > 0) {
+      if (!window.confirm(`¿Deseas descartar los ítems de "${tabToClose.name}"?`)) {
+        return;
+      }
+    }
+
+    if (tabs.length === 1) {
+      // Reset the single tab
+      const resetTab: TabOrder = {
+        id: 'tab-1',
+        name: 'Cuenta 1',
+        cart: [],
+        customer: { ...DEFAULT_CUSTOMER },
+        notes: '',
+        paymentMethod: 'cash',
+        cashReceived: '',
+      };
+      setTabs([resetTab]);
+      setActiveTabId('tab-1');
+      return;
+    }
+
+    const remaining = tabs.filter(t => t.id !== tabId);
+    setTabs(remaining);
+    if (activeTabId === tabId) {
+      setActiveTabId(remaining[0].id);
+    }
+  };
+
+  // Products filtering
   const gelatoFlavors = useMemo(() => {
     return products.filter(p => {
       const isGelatoCat = p.categoryId === 1 || p.categoryId === 2 || p.categoryId === 3;
       if (!isGelatoCat) return false;
       if (searchQuery.trim()) {
-        return p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-               (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
+        return (
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
       }
       return true;
     });
   }, [products, searchQuery]);
 
   const otherProducts = useMemo(() => {
-    if (typeof activeTab !== 'number') return [];
+    if (typeof catalogTab !== 'number') return [];
     return products.filter(p => {
-      if (p.categoryId !== activeTab) return false;
+      if (p.categoryId !== catalogTab) return false;
       if (searchQuery.trim()) {
         return p.name.toLowerCase().includes(searchQuery.toLowerCase());
       }
       return true;
     });
-  }, [products, activeTab, searchQuery]);
+  }, [products, catalogTab, searchQuery]);
 
+  // Cart operations
+  const addItemToCart = (item: OrderItem) => {
+    const prevCart = currentTab.cart;
+    const idx = prevCart.findIndex(i => i.name === item.name && i.price === item.price);
+    let updatedCart: OrderItem[];
+    if (idx >= 0) {
+      updatedCart = [...prevCart];
+      updatedCart[idx] = { ...updatedCart[idx], quantity: updatedCart[idx].quantity + 1 };
+    } else {
+      updatedCart = [...prevCart, item];
+    }
+    updateActiveTab({ cart: updatedCart });
+  };
+
+  const updateQuantity = (index: number, delta: number) => {
+    const prevCart = currentTab.cart;
+    const updated = [...prevCart];
+    const newQty = updated[index].quantity + delta;
+    let newCart: OrderItem[];
+    if (newQty <= 0) {
+      newCart = updated.filter((_, i) => i !== index);
+    } else {
+      updated[index] = { ...updated[index], quantity: newQty };
+      newCart = updated;
+    }
+    updateActiveTab({ cart: newCart });
+  };
+
+  const removeItem = (index: number) => {
+    updateActiveTab({ cart: currentTab.cart.filter((_, i) => i !== index) });
+  };
+
+  const clearCart = () => {
+    updateActiveTab({
+      cart: [],
+      cashReceived: '',
+      notes: '',
+      paymentSplit: undefined,
+    });
+    setFirstFlavor(null);
+  };
+
+  // Flavors Dispatch Logic
   const handleFlavorClick = (flavor: Product) => {
     if (!flavor.available) {
       toast.error(`${flavor.name} no está disponible actualmente`);
       return;
     }
 
-    if (selectedGelatoSize.scoops === 1) {
+    if (selectedFormat.scoops === 1) {
+      const containerLabel = selectedFormat.container === 'Cono' ? 'Cono' : 'Vaso';
       addItemToCart({
         productId: flavor.id,
-        name: `Gelato Pequeño — ${flavor.name}`,
-        size: selectedGelatoSize.name,
+        name: `Gelato en ${containerLabel} (${selectedFormat.capacity}) — ${flavor.name}`,
+        size: `${selectedFormat.name} (${selectedFormat.capacity})`,
         flavors: flavor.name,
         quantity: 1,
-        price: selectedGelatoSize.price,
+        price: selectedFormat.price,
         notes: '',
       });
-      toast.success(`Agregado: Pequeño (${flavor.name})`);
+      toast.success(`Agregado: ${selectedFormat.name} (${flavor.name})`);
     } else {
       if (!firstFlavor) {
         setFirstFlavor(flavor);
       } else {
         const isSame = firstFlavor.id === flavor.id;
+        const containerLabel = selectedFormat.container === 'Cono' ? 'Cono' : selectedFormat.container === 'Familiar' ? 'Litro Familiar' : 'Vaso';
         const combinationName = isSame
-          ? `Gelato ${selectedGelatoSize.name} — ${flavor.name}`
-          : `Gelato ${selectedGelatoSize.name} — ${firstFlavor.name} + ${flavor.name}`;
+          ? `Gelato en ${containerLabel} (${selectedFormat.capacity}) — ${flavor.name}`
+          : `Gelato en ${containerLabel} (${selectedFormat.capacity}) — ${firstFlavor.name} + ${flavor.name}`;
 
-        const flavorsList = isSame
-          ? `${flavor.name}`
-          : `${firstFlavor.name}, ${flavor.name}`;
+        const flavorsList = isSame ? `${flavor.name}` : `${firstFlavor.name}, ${flavor.name}`;
 
         addItemToCart({
           productId: firstFlavor.id,
           name: combinationName,
-          size: selectedGelatoSize.name,
+          size: `${selectedFormat.name} (${selectedFormat.capacity})`,
           flavors: flavorsList,
           quantity: 1,
-          price: selectedGelatoSize.price,
+          price: selectedFormat.price,
           notes: '',
         });
 
@@ -148,16 +344,17 @@ export const POSPage: React.FC = () => {
 
   const handleAddFirstFlavorSolo = () => {
     if (!firstFlavor) return;
+    const containerLabel = selectedFormat.container === 'Cono' ? 'Cono' : selectedFormat.container === 'Familiar' ? 'Litro Familiar' : 'Vaso';
     addItemToCart({
       productId: firstFlavor.id,
-      name: `Gelato ${selectedGelatoSize.name} — ${firstFlavor.name}`,
-      size: selectedGelatoSize.name,
+      name: `Gelato en ${containerLabel} (${selectedFormat.capacity}) — ${firstFlavor.name}`,
+      size: `${selectedFormat.name} (${selectedFormat.capacity})`,
       flavors: firstFlavor.name,
       quantity: 1,
-      price: selectedGelatoSize.price,
+      price: selectedFormat.price,
       notes: '',
     });
-    toast.success(`Agregado: Gelato ${selectedGelatoSize.name} (${firstFlavor.name})`);
+    toast.success(`Agregado: ${selectedFormat.name} (${firstFlavor.name})`);
     setFirstFlavor(null);
   };
 
@@ -192,45 +389,11 @@ export const POSPage: React.FC = () => {
       notes: 'Ítem personalizado',
     });
     setCustomItem({ name: '', price: '' });
-    setActiveTab('gelato');
+    setCatalogTab('gelato');
     toast.success('Ítem agregado al carrito');
   };
 
-  const addItemToCart = (item: OrderItem) => {
-    setCart(prev => {
-      const idx = prev.findIndex(i => i.name === item.name && i.price === item.price);
-      if (idx >= 0) {
-        const updated = [...prev];
-        updated[idx] = { ...updated[idx], quantity: updated[idx].quantity + 1 };
-        return updated;
-      }
-      return [...prev, item];
-    });
-  };
-
-  const updateQuantity = (index: number, delta: number) => {
-    setCart(prev => {
-      const updated = [...prev];
-      const newQty = updated[index].quantity + delta;
-      if (newQty <= 0) {
-        return updated.filter((_, i) => i !== index);
-      }
-      updated[index] = { ...updated[index], quantity: newQty };
-      return updated;
-    });
-  };
-
-  const removeItem = (index: number) => {
-    setCart(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const clearCart = () => {
-    setCart([]);
-    setFirstFlavor(null);
-    setCashReceived('');
-    setOrderNotes('');
-  };
-
+  // Checkout Execution
   const handleCheckout = async () => {
     if (cart.length === 0) {
       toast.error('El carrito está vacío');
@@ -240,6 +403,14 @@ export const POSPage: React.FC = () => {
     if (paymentMethod === 'cash') {
       if (numericCash > 0 && numericCash < total) {
         toast.error(`El monto recibido (${formatPrice(numericCash)}) es menor al total (${formatPrice(total)})`);
+        return;
+      }
+    }
+
+    if (paymentMethod === 'mixed') {
+      const sum = (paymentSplit?.amount1 || 0) + (paymentSplit?.amount2 || 0);
+      if (sum !== total) {
+        toast.error(`La suma de los métodos de pago (${formatPrice(sum)}) debe ser igual al total (${formatPrice(total)})`);
         return;
       }
     }
@@ -260,11 +431,12 @@ export const POSPage: React.FC = () => {
         items: cart,
         subtotal,
         deliveryFee: 0,
-        discount: discountAmount,
+        discount: 0,
         total,
         paymentMethod,
+        paymentSplit: paymentMethod === 'mixed' ? paymentSplit : undefined,
         paymentStatus: 'paid' as const,
-        cashReceived: paymentMethod === 'cash' ? (numericCash || total) : 0,
+        cashReceived: paymentMethod === 'cash' ? (numericCash || total) : paymentMethod === 'mixed' && paymentSplit.method1 === 'cash' ? paymentSplit.amount1 : 0,
         cashChange: paymentMethod === 'cash' ? Math.max(0, change) : 0,
         notes: orderNotes,
         shiftId: currentShift?.id || undefined,
@@ -281,7 +453,16 @@ export const POSPage: React.FC = () => {
 
         setLastOrder(completedOrder);
         setCountdown(3);
-        clearCart();
+
+        // Remove or reset completed tab
+        if (tabs.length > 1) {
+          const remaining = tabs.filter(t => t.id !== activeTabId);
+          setTabs(remaining);
+          setActiveTabId(remaining[0].id);
+        } else {
+          clearCart();
+        }
+
         setMobileView('catalog');
         toast.success(`¡Venta #${newId} completada con éxito!`);
       } else {
@@ -305,49 +486,6 @@ export const POSPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [lastOrder, countdown]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
-        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-          handleCheckout();
-        }
-        return;
-      }
-
-      if (e.key === '1') {
-        setSelectedGelatoSize(GELATO_SIZES[0]);
-        setFirstFlavor(null);
-        setActiveTab('gelato');
-      } else if (e.key === '2') {
-        setSelectedGelatoSize(GELATO_SIZES[1]);
-        setFirstFlavor(null);
-        setActiveTab('gelato');
-      } else if (e.key === '3') {
-        setSelectedGelatoSize(GELATO_SIZES[2]);
-        setFirstFlavor(null);
-        setActiveTab('gelato');
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (lastOrder) {
-          setLastOrder(null);
-        } else if (cart.length > 0) {
-          handleCheckout();
-        }
-      } else if (e.key === 'Escape') {
-        if (lastOrder) {
-          setLastOrder(null);
-        } else if (firstFlavor) {
-          setFirstFlavor(null);
-        } else if (showCustomerModal) {
-          setShowCustomerModal(false);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [cart, numericCash, total, paymentMethod, lastOrder, firstFlavor, showCustomerModal]);
-
   return (
     <div className="flex flex-col lg:flex-row h-full w-full bg-[#FEF3DE] text-[#364266] overflow-hidden">
       {/* Mobile Top View Switcher */}
@@ -359,7 +497,7 @@ export const POSPage: React.FC = () => {
             mobileView === 'catalog' ? 'bg-[#FAF8EA] text-[#242D49] shadow-sm' : 'text-[#FEF3DE]/80 hover:text-white'
           )}
         >
-          <span>🍨 Catálogo & Sabores</span>
+          <span>🍨 Sabores & Productos</span>
         </button>
         <button
           onClick={() => setMobileView('cart')}
@@ -369,7 +507,7 @@ export const POSPage: React.FC = () => {
           )}
         >
           <ShoppingCart size={14} />
-          <span>Carrito ({cart.reduce((a, b) => a + b.quantity, 0)}) • {formatPrice(total)}</span>
+          <span>{currentTab.name} ({cart.reduce((a, b) => a + b.quantity, 0)}) • {formatPrice(total)}</span>
         </button>
       </div>
 
@@ -406,10 +544,10 @@ export const POSPage: React.FC = () => {
           {/* Category Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             <button
-              onClick={() => { setActiveTab('gelato'); setFirstFlavor(null); }}
+              onClick={() => { setCatalogTab('gelato'); setFirstFlavor(null); }}
               className={cn(
                 'flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shadow-sm font-sans',
-                activeTab === 'gelato'
+                catalogTab === 'gelato'
                   ? 'bg-[#364266] text-[#FEF3DE] shadow-md scale-[1.01]'
                   : 'bg-white hover:bg-[#FAF8EA] text-[#364266] border border-[#364266]/10'
               )}
@@ -418,13 +556,14 @@ export const POSPage: React.FC = () => {
               <span>Gelatos Artesanales</span>
             </button>
 
-            {categories.filter(c => c.id === 4 || c.id === 5).map(cat => (
+            {/* Affogatos, Bebidas & Aguas, Adicionales */}
+            {categories.filter(c => c.id === 6 || c.id === 4 || c.id === 5).map(cat => (
               <button
                 key={cat.id}
-                onClick={() => { setActiveTab(cat.id); setFirstFlavor(null); }}
+                onClick={() => { setCatalogTab(cat.id); setFirstFlavor(null); }}
                 className={cn(
                   'flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all font-sans',
-                  activeTab === cat.id
+                  catalogTab === cat.id
                     ? 'bg-[#364266] text-[#FEF3DE] shadow-md scale-[1.01]'
                     : 'bg-white hover:bg-[#FAF8EA] text-[#364266] border border-[#364266]/10'
                 )}
@@ -435,10 +574,10 @@ export const POSPage: React.FC = () => {
             ))}
 
             <button
-              onClick={() => setActiveTab('custom')}
+              onClick={() => setCatalogTab('custom')}
               className={cn(
                 'flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all font-sans',
-                activeTab === 'custom'
+                catalogTab === 'custom'
                   ? 'bg-[#364266] text-[#FEF3DE] shadow-md'
                   : 'bg-white hover:bg-[#FAF8EA] text-[#364266] border border-[#364266]/10'
               )}
@@ -448,45 +587,44 @@ export const POSPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Size Selector - Compact Horizontal Layout */}
-          {activeTab === 'gelato' && (
+          {/* Size & Container Formats Selector (5 presentations) */}
+          {catalogTab === 'gelato' && (
             <div className="mt-2 pt-2 border-t border-[#364266]/10">
-              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-                {GELATO_SIZES.map((size, idx) => {
-                  const isSelected = selectedGelatoSize.id === size.id;
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                {GELATO_FORMATS.map((fmt) => {
+                  const isSelected = selectedFormat.id === fmt.id;
                   return (
                     <button
-                      key={size.id}
+                      key={fmt.id}
                       onClick={() => {
-                        setSelectedGelatoSize(size);
+                        setSelectedFormat(fmt);
                         setFirstFlavor(null);
                       }}
                       className={cn(
-                        'flex items-center justify-between px-2.5 py-1.5 sm:py-2 rounded-xl border transition-all text-left shadow-sm',
+                        'flex items-center justify-between p-2 rounded-xl border transition-all text-left shadow-sm',
                         isSelected
-                          ? 'bg-[#FAF8EA] border-[#364266] ring-1 ring-[#364266] font-bold scale-[1.01]'
-                          : 'bg-white/80 border-gray-200 hover:border-[#C6BF81] hover:bg-white text-[#364266]'
+                          ? 'bg-[#FAF8EA] border-[#364266] ring-2 ring-[#364266] font-bold scale-[1.01]'
+                          : 'bg-white/90 border-gray-200 hover:border-[#C6BF81] hover:bg-white text-[#364266]'
                       )}
                     >
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-sm sm:text-base">{size.emoji}</span>
+                        <span className="text-base">{fmt.emoji}</span>
                         <div className="leading-tight truncate">
-                          <p className="font-sans font-bold text-[11px] sm:text-xs text-[#242D49] truncate">
-                            {size.name} <span className="text-[10px] text-gray-500 font-normal">({size.desc})</span>
+                          <p className="font-sans font-bold text-[11px] text-[#242D49] truncate">
+                            {fmt.name}
                           </p>
-                          <p className="font-sans font-bold text-[11px] sm:text-xs text-[#344268]">
-                            {formatPrice(size.price)}
+                          <p className="font-sans font-bold text-[10.5px] text-[#344268]">
+                            {formatPrice(fmt.price)}
                           </p>
                         </div>
                       </div>
-                      <span className="text-[9px] font-mono text-gray-400 shrink-0 hidden sm:inline">[{idx + 1}]</span>
                     </button>
                   );
                 })}
               </div>
 
               {/* Dynamic Helper Banner */}
-              {selectedGelatoSize.scoops === 2 && (
+              {selectedFormat.scoops === 2 && (
                 <div className="mt-1.5 px-2.5 py-1.5 rounded-xl bg-[#FAF8EA] border border-[#C6BF81]/40 flex items-center justify-between text-xs font-medium text-[#364266]">
                   {firstFlavor ? (
                     <div className="flex items-center gap-1.5 truncate flex-1 min-w-0">
@@ -507,7 +645,7 @@ export const POSPage: React.FC = () => {
                     </div>
                   ) : (
                     <span className="text-[11px] font-sans">
-                      Paso 1: <strong className="text-[#364266]">Toca el sabor deseado</strong> <span className="text-gray-500 font-normal">(puedes combinar 2 o dejar 1 solo)</span>
+                      Paso 1: <strong className="text-[#364266]">Toca el 1er sabor</strong> <span className="text-gray-500 font-normal">({selectedFormat.desc})</span>
                     </span>
                   )}
 
@@ -527,7 +665,7 @@ export const POSPage: React.FC = () => {
 
         {/* Catalog Grid Area */}
         <div className="flex-1 overflow-y-auto p-3 lg:p-4">
-          {activeTab === 'gelato' && (
+          {catalogTab === 'gelato' && (
             <div>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-bold tracking-wider uppercase text-[#897863]">
@@ -616,8 +754,8 @@ export const POSPage: React.FC = () => {
             </div>
           )}
 
-          {/* Other Categories Grid */}
-          {typeof activeTab === 'number' && (
+          {/* Other Categories Grid (Affogatos, Bebidas & Aguas, Adicionales) */}
+          {typeof catalogTab === 'number' && (
             <div>
               <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
                 {otherProducts.map(prod => (
@@ -625,26 +763,29 @@ export const POSPage: React.FC = () => {
                     key={prod.id}
                     onClick={() => handleAddOtherProduct(prod)}
                     className={cn(
-                      'p-3.5 rounded-2xl bg-white border border-[#364266]/10 hover:border-[#C6BF81] hover:shadow-md cursor-pointer transition-all flex flex-col justify-between',
+                      'p-3.5 rounded-2xl bg-white border border-[#364266]/10 hover:border-[#C6BF81] hover:shadow-md cursor-pointer transition-all flex flex-col justify-between shadow-sm',
                       !prod.available && 'opacity-50 grayscale'
                     )}
                   >
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-sans font-bold text-[#364266] text-base">{prod.name}</h3>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleProductAvailability(prod.id);
-                        }}
-                        className="p-1 rounded-md hover:bg-gray-100"
-                      >
-                        {prod.available ? <Eye size={14} className="text-emerald-600" /> : <EyeOff size={14} className="text-red-500" />}
-                      </button>
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-sans font-bold text-[#364266] text-base">{prod.name}</h3>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleProductAvailability(prod.id);
+                          }}
+                          className="p-1 rounded-md hover:bg-gray-100"
+                        >
+                          {prod.available ? <Eye size={14} className="text-emerald-600" /> : <EyeOff size={14} className="text-red-500" />}
+                        </button>
+                      </div>
+                      <p className="font-sans text-xs text-[#897863] not-italic my-1">{prod.description || 'Producto Gia'}</p>
                     </div>
-                    <p className="font-sans text-xs text-[#897863] not-italic my-1">{prod.description || 'Producto Gia'}</p>
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-                      <span className="font-sans font-bold text-[#344268]">{formatPrice(prod.price)}</span>
-                      <span className="w-7 h-7 rounded-full bg-[#364266] text-[#FEF3DE] flex items-center justify-center text-xs font-bold">
+
+                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                      <span className="font-sans font-bold text-base text-[#344268]">{formatPrice(prod.price)}</span>
+                      <span className="w-8 h-8 rounded-full bg-[#364266] text-[#FEF3DE] flex items-center justify-center text-sm font-bold shadow-sm">
                         +
                       </span>
                     </div>
@@ -655,7 +796,7 @@ export const POSPage: React.FC = () => {
           )}
 
           {/* Custom Item Form */}
-          {activeTab === 'custom' && (
+          {catalogTab === 'custom' && (
             <div className="max-w-md mx-auto p-6 bg-white rounded-3xl border border-[#364266]/10 shadow-sm mt-4">
               <h3 className="font-sans font-bold text-lg text-[#364266] mb-4">Agregar Ítem Especial</h3>
               <div className="space-y-4">
@@ -690,7 +831,7 @@ export const POSPage: React.FC = () => {
           )}
         </div>
 
-        {/* Floating Mobile Cart Bar (When in catalog view on mobile) */}
+        {/* Floating Mobile Cart Bar */}
         {cart.length > 0 && (
           <div className="lg:hidden p-2.5 bg-white border-t border-[#364266]/15 shadow-xl shrink-0">
             <button
@@ -699,7 +840,7 @@ export const POSPage: React.FC = () => {
             >
               <span className="flex items-center gap-2">
                 <ShoppingCart size={15} />
-                {cart.reduce((a, b) => a + b.quantity, 0)} ítems en orden
+                {currentTab.name} • {cart.reduce((a, b) => a + b.quantity, 0)} ítems
               </span>
               <span className="flex items-center gap-1 font-extrabold text-sm">
                 Cobrar {formatPrice(total)} <ArrowRight size={15} />
@@ -710,28 +851,81 @@ export const POSPage: React.FC = () => {
       </div>
 
       {/* RIGHT COLUMN: Live Cart & Fast Checkout Panel */}
-      <div className={cn('w-full lg:w-[400px] xl:w-[440px] bg-white flex-col h-full border-l border-[#364266]/10 shadow-xl shrink-0 font-sans', mobileView === 'cart' ? 'flex' : 'hidden lg:flex')}>
+      <div className={cn('w-full lg:w-[410px] xl:w-[450px] bg-white flex-col h-full border-l border-[#364266]/10 shadow-xl shrink-0 font-sans', mobileView === 'cart' ? 'flex' : 'hidden lg:flex')}>
+        {/* Precuentas / Multi-tabs Bar */}
+        <div className="p-2 bg-[#242D49] text-white flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+          <div className="flex items-center gap-1 shrink-0 text-xs font-bold text-[#C6BF81] pl-1 pr-2">
+            <Layers size={14} />
+            <span className="hidden sm:inline">Cuentas:</span>
+          </div>
+
+          {tabs.map((tab) => {
+            const isActive = tab.id === activeTabId;
+            const itemCount = tab.cart.reduce((a, b) => a + b.quantity, 0);
+            return (
+              <div
+                key={tab.id}
+                onClick={() => setActiveTabId(tab.id)}
+                className={cn(
+                  'px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer flex items-center gap-1.5 transition-all select-none whitespace-nowrap',
+                  isActive
+                    ? 'bg-[#FEF3DE] text-[#242D49] font-bold shadow-md'
+                    : 'bg-white/10 text-[#FEF3DE]/80 hover:bg-white/20'
+                )}
+              >
+                <span>{tab.name}</span>
+                {itemCount > 0 && (
+                  <span className={cn(
+                    'px-1.5 py-0.2 text-[10px] rounded-full font-bold',
+                    isActive ? 'bg-[#364266] text-[#FEF3DE]' : 'bg-white/20 text-white'
+                  )}>
+                    {itemCount}
+                  </span>
+                )}
+                {tabs.length > 1 && (
+                  <button
+                    onClick={(e) => handleCloseTab(tab.id, e)}
+                    className="hover:text-red-400 p-0.5 rounded-md"
+                    title="Cerrar esta cuenta"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+
+          <button
+            onClick={handleAddNewTab}
+            className="p-1 px-2 rounded-xl bg-[#C6BF81] hover:bg-[#b8b070] text-[#242D49] text-xs font-bold flex items-center gap-0.5 shrink-0 shadow-sm"
+            title="Abrir otra cuenta en espera"
+          >
+            <Plus size={13} />
+            <span className="text-[11px]">Nueva</span>
+          </button>
+        </div>
+
         {/* Cart Header */}
-        <div className="p-3 bg-[#FAF8EA] border-b border-[#364266]/10 flex items-center justify-between shrink-0">
+        <div className="p-2.5 bg-[#FAF8EA] border-b border-[#364266]/10 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileView('catalog')}
-              className="lg:hidden p-1.5 rounded-lg bg-white border border-[#364266]/20 text-[#364266] hover:bg-gray-50 flex items-center gap-1 text-xs font-bold font-sans"
+              className="lg:hidden p-1 rounded-lg bg-white border border-[#364266]/20 text-[#364266] hover:bg-gray-50 flex items-center gap-1 text-xs font-bold font-sans"
               title="Volver al catálogo"
             >
               <ArrowLeft size={13} />
-              <span>+ Sabores</span>
+              <span>Sabores</span>
             </button>
-            <ShoppingCart size={17} className="text-[#364266]" />
-            <h2 className="font-sans font-bold text-sm lg:text-base text-[#364266]">
-              Orden ({cart.reduce((a, b) => a + b.quantity, 0)})
+            <ShoppingCart size={16} className="text-[#364266]" />
+            <h2 className="font-sans font-bold text-sm text-[#364266]">
+              {currentTab.name} ({cart.reduce((a, b) => a + b.quantity, 0)})
             </h2>
           </div>
 
           {cart.length > 0 && (
             <button
               onClick={clearCart}
-              className="text-xs text-red-600 hover:text-red-700 font-semibold font-sans flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-red-50"
+              className="text-xs text-red-600 hover:text-red-700 font-semibold font-sans flex items-center gap-1 px-2 py-0.5 rounded-lg hover:bg-red-50"
             >
               <Trash2 size={13} /> Vaciar
             </button>
@@ -757,15 +951,15 @@ export const POSPage: React.FC = () => {
         </div>
 
         {/* Cart Items List */}
-        <div className="flex-1 overflow-y-auto min-h-0 p-2.5 lg:p-3 space-y-2">
+        <div className="flex-1 overflow-y-auto min-h-0 p-2.5 space-y-2">
           {cart.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center text-[#897863]/70 p-4">
-              <div className="w-14 h-14 rounded-full bg-[#FAF8EA] flex items-center justify-center text-2xl mb-2">
-                🍦
+              <div className="w-12 h-12 rounded-full bg-[#FAF8EA] flex items-center justify-center text-2xl mb-2">
+                🍨
               </div>
-              <p className="font-sans font-bold text-sm text-[#364266]">Carrito Vacío</p>
+              <p className="font-sans font-bold text-sm text-[#364266]">Cuenta sin ítems</p>
               <p className="text-xs text-[#897863] max-w-xs mt-1 font-sans">
-                Toca los sabores o productos en el catálogo para agregarlos.
+                Selecciona sabores o productos en el catálogo para agregarlos a {currentTab.name}.
               </p>
             </div>
           ) : (
@@ -827,63 +1021,76 @@ export const POSPage: React.FC = () => {
         </div>
 
         {/* Cart Totals & Fast Checkout Controls */}
-        <div className="p-2.5 sm:p-3.5 bg-[#FAF8EA] border-t border-[#364266]/15 shrink-0 space-y-2 sm:space-y-2.5">
-          {/* Payment Method Selector */}
+        <div className="p-2.5 sm:p-3 bg-[#FAF8EA] border-t border-[#364266]/15 shrink-0 space-y-2">
+          {/* Payment Method Selector (5 options including Mixed) */}
           <div>
-            <label className="text-[10px] sm:text-[11px] font-bold text-[#897863] uppercase tracking-wider block mb-1">
+            <label className="text-[10px] font-bold text-[#897863] uppercase tracking-wider block mb-1">
               Método de Pago
             </label>
-            <div className="grid grid-cols-4 gap-1 sm:gap-1.5">
+            <div className="grid grid-cols-5 gap-1">
               <button
-                onClick={() => setPaymentMethod('cash')}
+                onClick={() => updateActiveTab({ paymentMethod: 'cash' })}
                 className={cn(
-                  'py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
+                  'py-1.5 px-0.5 rounded-xl text-[10px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
                   paymentMethod === 'cash'
                     ? 'bg-[#364266] text-[#FEF3DE] shadow-md'
                     : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
                 )}
               >
-                <Banknote size={14} />
+                <Banknote size={13} />
                 <span>Efectivo</span>
               </button>
 
               <button
-                onClick={() => setPaymentMethod('card_debit')}
+                onClick={() => updateActiveTab({ paymentMethod: 'card_debit' })}
                 className={cn(
-                  'py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
+                  'py-1.5 px-0.5 rounded-xl text-[10px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
                   paymentMethod === 'card_debit'
                     ? 'bg-[#364266] text-[#FEF3DE] shadow-md'
                     : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
                 )}
               >
-                <CreditCard size={14} />
+                <CreditCard size={13} />
                 <span>T. Débito</span>
               </button>
 
               <button
-                onClick={() => setPaymentMethod('card_credit')}
+                onClick={() => updateActiveTab({ paymentMethod: 'card_credit' })}
                 className={cn(
-                  'py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
+                  'py-1.5 px-0.5 rounded-xl text-[10px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
                   paymentMethod === 'card_credit'
                     ? 'bg-[#364266] text-[#FEF3DE] shadow-md'
                     : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
                 )}
               >
-                <CreditCard size={14} />
+                <CreditCard size={13} />
                 <span>T. Crédito</span>
               </button>
 
               <button
-                onClick={() => setPaymentMethod('transfer')}
+                onClick={() => updateActiveTab({ paymentMethod: 'transfer' })}
                 className={cn(
-                  'py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
+                  'py-1.5 px-0.5 rounded-xl text-[10px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
                   paymentMethod === 'transfer'
                     ? 'bg-[#364266] text-[#FEF3DE] shadow-md'
                     : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
                 )}
               >
-                <QrCode size={14} />
-                <span>QR / Transf.</span>
+                <QrCode size={13} />
+                <span>QR/Transf</span>
+              </button>
+
+              <button
+                onClick={() => updateActiveTab({ paymentMethod: 'mixed' })}
+                className={cn(
+                  'py-1.5 px-0.5 rounded-xl text-[10px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
+                  paymentMethod === 'mixed'
+                    ? 'bg-[#242D49] text-[#C6BF81] ring-2 ring-[#C6BF81] shadow-md'
+                    : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
+                )}
+              >
+                <Shuffle size={13} />
+                <span>Mixto</span>
               </button>
             </div>
           </div>
@@ -893,16 +1100,16 @@ export const POSPage: React.FC = () => {
             <div className="space-y-1.5 pt-0.5">
               <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
                 <button
-                  onClick={() => setCashReceived(String(total))}
-                  className="px-2 py-0.5 rounded-lg bg-white border border-[#364266]/20 hover:bg-[#FAF8EA] text-[10px] sm:text-[11px] font-bold text-[#364266] whitespace-nowrap shadow-sm"
+                  onClick={() => updateActiveTab({ cashReceived: String(total) })}
+                  className="px-2 py-0.5 rounded-lg bg-white border border-[#364266]/20 hover:bg-[#FAF8EA] text-[10px] font-bold text-[#364266] whitespace-nowrap shadow-sm"
                 >
                   Exacto (${formatPrice(total)})
                 </button>
                 {QUICK_CASH_AMOUNTS.filter(a => a >= total).map(amt => (
                   <button
                     key={amt}
-                    onClick={() => setCashReceived(String(amt))}
-                    className="px-2 py-0.5 rounded-lg bg-white border border-[#364266]/20 hover:bg-[#FAF8EA] text-[10px] sm:text-[11px] font-bold text-[#364266] whitespace-nowrap shadow-sm"
+                    onClick={() => updateActiveTab({ cashReceived: String(amt) })}
+                    className="px-2 py-0.5 rounded-lg bg-white border border-[#364266]/20 hover:bg-[#FAF8EA] text-[10px] font-bold text-[#364266] whitespace-nowrap shadow-sm"
                   >
                     ${formatPrice(amt)}
                   </button>
@@ -911,19 +1118,19 @@ export const POSPage: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-1.5">
                 <div>
-                  <label className="text-[9px] sm:text-[10px] font-bold text-[#897863]">Efectivo Recibido</label>
+                  <label className="text-[9px] font-bold text-[#897863]">Efectivo Recibido</label>
                   <input
                     type="number"
                     value={cashReceived}
-                    onChange={(e) => setCashReceived(e.target.value)}
+                    onChange={(e) => updateActiveTab({ cashReceived: e.target.value })}
                     placeholder={String(total)}
-                    className="w-full p-1.5 text-xs sm:text-sm font-bold bg-white rounded-xl border border-[#364266]/20 focus:ring-2 focus:ring-[#364266]"
+                    className="w-full p-1.5 text-xs font-bold bg-white rounded-xl border border-[#364266]/20 focus:ring-2 focus:ring-[#364266]"
                   />
                 </div>
                 <div>
-                  <label className="text-[9px] sm:text-[10px] font-bold text-[#897863]">Cambio / Vueltos</label>
+                  <label className="text-[9px] font-bold text-[#897863]">Cambio / Vueltos</label>
                   <div className={cn(
-                    'p-1.5 text-xs sm:text-sm font-bold rounded-xl border text-right truncate',
+                    'p-1.5 text-xs font-bold rounded-xl border text-right truncate',
                     change >= 0
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
                       : 'bg-red-50 text-red-600 border-red-200'
@@ -935,20 +1142,90 @@ export const POSPage: React.FC = () => {
             </div>
           )}
 
+          {/* Split Payment (Pago Combinado / Mixto) UI */}
+          {paymentMethod === 'mixed' && (
+            <div className="p-2.5 rounded-xl bg-white border border-[#C6BF81]/60 space-y-2 text-xs">
+              <div className="flex items-center justify-between text-[11px] font-bold text-[#364266] pb-1 border-b border-gray-100">
+                <span className="flex items-center gap-1">
+                  <Shuffle size={13} className="text-[#C6BF81]" /> Desglose de Pago Mixto
+                </span>
+                <span className="text-[#344268]">{formatPrice(total)}</span>
+              </div>
+
+              {/* Method 1 */}
+              <div className="grid grid-cols-2 gap-1.5">
+                <div>
+                  <label className="text-[9px] text-[#897863] font-bold">1er Método</label>
+                  <select
+                    value={paymentSplit.method1}
+                    onChange={(e) => updateActiveTab({
+                      paymentSplit: { ...paymentSplit, method1: e.target.value as PaymentMethod }
+                    })}
+                    className="w-full p-1 text-xs rounded-lg border border-gray-200 bg-white"
+                  >
+                    <option value="cash">💵 Efectivo</option>
+                    <option value="card_debit">💳 T. Débito</option>
+                    <option value="card_credit">💳 T. Crédito</option>
+                    <option value="transfer">📱 QR / Nequi</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[9px] text-[#897863] font-bold">Monto 1</label>
+                  <input
+                    type="number"
+                    value={paymentSplit.amount1 || ''}
+                    onChange={(e) => {
+                      const a1 = Number(e.target.value) || 0;
+                      const a2 = Math.max(0, total - a1);
+                      updateActiveTab({
+                        paymentSplit: { ...paymentSplit, amount1: a1, amount2: a2 }
+                      });
+                    }}
+                    placeholder="0"
+                    className="w-full p-1 text-xs font-bold rounded-lg border border-gray-200"
+                  />
+                </div>
+              </div>
+
+              {/* Method 2 */}
+              <div className="grid grid-cols-2 gap-1.5">
+                <div>
+                  <label className="text-[9px] text-[#897863] font-bold">2do Método</label>
+                  <select
+                    value={paymentSplit.method2}
+                    onChange={(e) => updateActiveTab({
+                      paymentSplit: { ...paymentSplit, method2: e.target.value as PaymentMethod }
+                    })}
+                    className="w-full p-1 text-xs rounded-lg border border-gray-200 bg-white"
+                  >
+                    <option value="card_debit">💳 T. Débito</option>
+                    <option value="card_credit">💳 T. Crédito</option>
+                    <option value="transfer">📱 QR / Nequi</option>
+                    <option value="cash">💵 Efectivo</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[9px] text-[#897863] font-bold">Monto 2 (Restante)</label>
+                  <input
+                    type="number"
+                    value={paymentSplit.amount2 || ''}
+                    onChange={(e) => {
+                      const a2 = Number(e.target.value) || 0;
+                      const a1 = Math.max(0, total - a2);
+                      updateActiveTab({
+                        paymentSplit: { ...paymentSplit, amount1: a1, amount2: a2 }
+                      });
+                    }}
+                    placeholder="0"
+                    className="w-full p-1 text-xs font-bold rounded-lg border border-gray-200"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Totals Summary */}
           <div className="pt-1 border-t border-[#364266]/10 space-y-0.5 text-xs">
-            <div className="flex justify-between text-[#897863] text-[11px]">
-              <span>Subtotal:</span>
-              <span className="font-semibold">{formatPrice(subtotal)}</span>
-            </div>
-
-            {discountPercent > 0 && (
-              <div className="flex justify-between text-emerald-700 font-semibold text-[11px]">
-                <span>Descuento ({discountPercent}%):</span>
-                <span>-{formatPrice(discountAmount)}</span>
-              </div>
-            )}
-
             <div className="flex items-baseline justify-between pt-0.5 text-sm sm:text-base font-sans font-bold text-[#364266]">
               <span>Total a Cobrar:</span>
               <span className="text-base sm:text-xl font-sans font-extrabold text-[#242D49]">{formatPrice(total)}</span>
@@ -972,7 +1249,6 @@ export const POSPage: React.FC = () => {
               <>
                 <Sparkles size={16} />
                 <span>COBRAR {formatPrice(total)}</span>
-                <span className="text-xs font-mono opacity-70 ml-1 hidden sm:inline">(Enter)</span>
               </>
             )}
           </button>
@@ -998,13 +1274,7 @@ export const POSPage: React.FC = () => {
 
               <button
                 onClick={() => {
-                  setCustomer({
-                    name: 'Consumidor Final',
-                    doc: '222222222222',
-                    email: '',
-                    phone: '3000000000',
-                    isElectronicInvoice: false,
-                  });
+                  updateActiveTab({ customer: { ...DEFAULT_CUSTOMER } });
                   setShowCustomerModal(false);
                 }}
                 className="w-full mb-4 py-2.5 px-3 rounded-xl bg-[#FAF8EA] border border-[#C6BF81]/50 text-xs font-bold text-[#364266] hover:bg-[#EFEDD8] flex items-center justify-center gap-2"
@@ -1030,12 +1300,14 @@ export const POSPage: React.FC = () => {
                           <div
                             key={c.id}
                             onClick={() => {
-                              setCustomer({
-                                name: c.name,
-                                doc: c.documentId || '222222222222',
-                                email: c.email || '',
-                                phone: c.phone || '',
-                                isElectronicInvoice: true,
+                              updateActiveTab({
+                                customer: {
+                                  name: c.name,
+                                  doc: c.documentId || '222222222222',
+                                  email: c.email || '',
+                                  phone: c.phone || '',
+                                  isElectronicInvoice: true,
+                                },
                               });
                               setCustSearchQuery('');
                               setShowCustomerModal(false);
@@ -1055,7 +1327,7 @@ export const POSPage: React.FC = () => {
                   <input
                     type="text"
                     value={customer.name}
-                    onChange={(e) => setCustomer(c => ({ ...c, name: e.target.value }))}
+                    onChange={(e) => updateActiveTab({ customer: { ...customer, name: e.target.value } })}
                     className="w-full mt-1 p-2.5 rounded-xl border border-gray-200 text-sm font-medium"
                   />
                 </div>
@@ -1066,7 +1338,7 @@ export const POSPage: React.FC = () => {
                     <input
                       type="text"
                       value={customer.doc}
-                      onChange={(e) => setCustomer(c => ({ ...c, doc: e.target.value }))}
+                      onChange={(e) => updateActiveTab({ customer: { ...customer, doc: e.target.value } })}
                       className="w-full mt-1 p-2.5 rounded-xl border border-gray-200 text-sm font-mono"
                     />
                   </div>
@@ -1075,7 +1347,7 @@ export const POSPage: React.FC = () => {
                     <input
                       type="text"
                       value={customer.phone}
-                      onChange={(e) => setCustomer(c => ({ ...c, phone: e.target.value }))}
+                      onChange={(e) => updateActiveTab({ customer: { ...customer, phone: e.target.value } })}
                       className="w-full mt-1 p-2.5 rounded-xl border border-gray-200 text-sm"
                     />
                   </div>
@@ -1086,7 +1358,7 @@ export const POSPage: React.FC = () => {
                   <input
                     type="email"
                     value={customer.email}
-                    onChange={(e) => setCustomer(c => ({ ...c, email: e.target.value }))}
+                    onChange={(e) => updateActiveTab({ customer: { ...customer, email: e.target.value } })}
                     placeholder="cliente@ejemplo.com"
                     className="w-full mt-1 p-2.5 rounded-xl border border-gray-200 text-sm"
                   />
@@ -1097,7 +1369,7 @@ export const POSPage: React.FC = () => {
                     type="checkbox"
                     id="fe-check"
                     checked={customer.isElectronicInvoice}
-                    onChange={(e) => setCustomer(c => ({ ...c, isElectronicInvoice: e.target.checked }))}
+                    onChange={(e) => updateActiveTab({ customer: { ...customer, isElectronicInvoice: e.target.checked } })}
                     className="rounded border-gray-300 text-[#364266] focus:ring-[#364266]"
                   />
                   <label htmlFor="fe-check" className="font-semibold text-[#364266]">
@@ -1119,7 +1391,7 @@ export const POSPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Post-Payment Print Modal (Siigo Inspired with Paper Size Selector) */}
+      {/* Post-Payment Print Modal */}
       <PrintModal
         isOpen={!!lastOrder}
         onClose={() => setLastOrder(null)}

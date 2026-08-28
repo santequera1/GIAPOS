@@ -119,6 +119,16 @@ function initSchema() {
       notes TEXT DEFAULT ''
     );
 
+    CREATE TABLE IF NOT EXISTS cash_movements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      shift_id INTEGER NOT NULL REFERENCES cash_shifts(id),
+      type TEXT NOT NULL CHECK(type IN ('withdrawal', 'deposit')),
+      amount INTEGER NOT NULL,
+      reason TEXT NOT NULL,
+      cashier_name TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now', '-5 hours'))
+    );
+
     CREATE TABLE IF NOT EXISTS drivers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -147,6 +157,18 @@ function migrateSchema() {
     }
   };
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS cash_movements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      shift_id INTEGER NOT NULL REFERENCES cash_shifts(id),
+      type TEXT NOT NULL CHECK(type IN ('withdrawal', 'deposit')),
+      amount INTEGER NOT NULL,
+      reason TEXT NOT NULL,
+      cashier_name TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now', '-5 hours'))
+    );
+  `);
+
   addCol('orders', 'customer_doc', "TEXT DEFAULT '222222222222'");
   addCol('orders', 'customer_email', "TEXT DEFAULT ''");
   addCol('orders', 'is_electronic_invoice', "INTEGER DEFAULT 0");
@@ -156,6 +178,7 @@ function migrateSchema() {
   addCol('orders', 'shift_id', "INTEGER");
   addCol('orders', 'notes', "TEXT DEFAULT ''");
   addCol('orders', 'receipt_image', "TEXT");
+  addCol('orders', 'payment_split', "TEXT");
 
   addCol('order_items', 'size', "TEXT");
   addCol('order_items', 'flavors', "TEXT");
@@ -168,6 +191,60 @@ function migrateSchema() {
   addCol('customers', 'document_id', "TEXT DEFAULT '222222222222'");
   addCol('customers', 'email', "TEXT DEFAULT ''");
   addCol('customers', 'is_company', "INTEGER DEFAULT 0");
+
+  // Sync Categories & Special Products for Gia Gelatería
+  try {
+    const existingCat = db.prepare('SELECT id FROM categories WHERE id = 6').get();
+    if (!existingCat) {
+      db.prepare("INSERT OR REPLACE INTO categories (id, name, emoji, color) VALUES (6, 'Affogatos', '☕', '#7C8455')").run();
+    }
+    db.prepare("INSERT OR REPLACE INTO categories (id, name, emoji, color) VALUES (4, 'Bebidas & Aguas', '🥤', '#364266')").run();
+    db.prepare("INSERT OR REPLACE INTO categories (id, name, emoji, color) VALUES (5, 'Adicionales & Toppings', '🧇', '#897863')").run();
+
+    // Ensure Affogato Clásico
+    const affogato = db.prepare("SELECT id FROM products WHERE name LIKE '%Affogato%'").get();
+    if (!affogato) {
+      db.prepare(`
+        INSERT INTO products (name, category_id, price, available, image, description)
+        VALUES ('Affogato Clásico', 6, 21000, 1, '/images/products/affogato.webp', 'Gelato artesanal de vainilla con shot de espresso caliente italiano')
+      `).run();
+    }
+
+    // Ensure Aguas & Adicionales
+    const aguaSinGas = db.prepare("SELECT id FROM products WHERE name LIKE '%Agua%Sin Gas%' OR name = 'Agua Cristal'").get();
+    if (!aguaSinGas) {
+      db.prepare(`
+        INSERT INTO products (name, category_id, price, available, image, description)
+        VALUES ('Agua Cristal (Sin Gas)', 4, 6000, 1, '/images/products/agua.webp', 'Botella 500ml')
+      `).run();
+    }
+
+    const aguaConGas = db.prepare("SELECT id FROM products WHERE name LIKE '%Agua%Con Gas%'").get();
+    if (!aguaConGas) {
+      db.prepare(`
+        INSERT INTO products (name, category_id, price, available, image, description)
+        VALUES ('Agua con Gas Manantial / San Pellegrino', 4, 7000, 1, '/images/products/agua-gas.webp', 'Botella 300ml con gas refrescante')
+      `).run();
+    }
+
+    const salsaPistacho = db.prepare("SELECT id FROM products WHERE name LIKE '%Salsa%Pistacho%'").get();
+    if (!salsaPistacho) {
+      db.prepare(`
+        INSERT INTO products (name, category_id, price, available, image, description)
+        VALUES ('Salsa de Pistacho Artesanal', 5, 4000, 1, null, 'Cremosa salsa de pistacho italiano')
+      `).run();
+    }
+
+    const salsaChoco = db.prepare("SELECT id FROM products WHERE name LIKE '%Salsa%Chocolate%'").get();
+    if (!salsaChoco) {
+      db.prepare(`
+        INSERT INTO products (name, category_id, price, available, image, description)
+        VALUES ('Salsa de Chocolate Belga', 5, 4000, 1, null, 'Salsa tibia de cacao artesanal')
+      `).run();
+    }
+  } catch (err) {
+    console.error('Error syncing Gia special products:', err);
+  }
 }
 
 function seedIfEmpty() {

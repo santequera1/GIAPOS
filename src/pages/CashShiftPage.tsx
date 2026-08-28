@@ -16,6 +16,10 @@ import {
   ShoppingBag,
   TrendingUp,
   History,
+  ArrowDownRight,
+  MinusCircle,
+  Receipt,
+  Plus,
 } from 'lucide-react';
 import { useStore, type CashShift } from '@/store/useStore';
 import { api } from '@/lib/api';
@@ -25,7 +29,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
 export const CashShiftPage: React.FC = () => {
-  const { currentShift, refreshCurrentShift, closeShift, openShift, businessName, businessSlogan } = useStore();
+  const { currentShift, refreshCurrentShift, closeShift, openShift, addCashMovement, businessName, businessSlogan } = useStore();
 
   const [actualCashInput, setActualCashInput] = useState<string>('');
   const [closureNotes, setClosureNotes] = useState<string>('');
@@ -35,6 +39,12 @@ export const CashShiftPage: React.FC = () => {
   const [showOpenModal, setShowOpenModal] = useState(false);
   const [initialBaseInput, setInitialBaseInput] = useState<string>('100000');
   const [cashierNameInput, setCashierNameInput] = useState<string>('');
+
+  // Cash withdrawal / Expense modal state
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+  const [withdrawalAmount, setWithdrawalAmount] = useState<string>('');
+  const [withdrawalReason, setWithdrawalReason] = useState<string>('');
+  const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
 
   // Shift History
   const [history, setHistory] = useState<any[]>([]);
@@ -105,6 +115,32 @@ export const CashShiftPage: React.FC = () => {
     }
   };
 
+  const handleCreateWithdrawal = async () => {
+    const amt = Number(withdrawalAmount) || 0;
+    if (amt <= 0) {
+      toast.error('Ingresa un monto válido para el retiro');
+      return;
+    }
+    if (!withdrawalReason.trim()) {
+      toast.error('Ingresa el motivo del retiro (ej. Compra de agua, frutas, insumos)');
+      return;
+    }
+    setIsSubmittingWithdrawal(true);
+    try {
+      await addCashMovement(amt, withdrawalReason.trim(), 'withdrawal');
+      toast.success(`Retiro de ${formatPrice(amt)} registrado exitosamente`);
+      setShowWithdrawalModal(false);
+      setWithdrawalAmount('');
+      setWithdrawalReason('');
+      refreshCurrentShift();
+    } catch (err) {
+      console.error(err);
+      toast.error('Error al registrar el retiro');
+    } finally {
+      setIsSubmittingWithdrawal(false);
+    }
+  };
+
   return (
     <div className="p-4 lg:p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
@@ -123,7 +159,7 @@ export const CashShiftPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {currentShift?.status === 'open' ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
               <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
@@ -134,6 +170,16 @@ export const CashShiftPage: React.FC = () => {
               <Lock size={13} />
               Caja Cerrada
             </span>
+          )}
+
+          {currentShift?.status === 'open' && (
+            <button
+              onClick={() => setShowWithdrawalModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+            >
+              <MinusCircle size={14} className="text-red-600" />
+              <span>Registrar Retiro / Gasto</span>
+            </button>
           )}
 
           <button
@@ -147,7 +193,7 @@ export const CashShiftPage: React.FC = () => {
 
       {/* Main Stats Grid */}
       {currentShift && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {/* Base Inicial */}
           <div className="p-4 rounded-2xl bg-white border border-[#364266]/10 shadow-sm flex flex-col justify-between">
             <div className="flex items-center justify-between text-[#897863]">
@@ -155,7 +201,7 @@ export const CashShiftPage: React.FC = () => {
               <Coins size={16} className="text-[#C6BF81]" />
             </div>
             <div className="mt-2">
-              <p className="text-lg lg:text-xl font-bold font-serif text-[#364266]">
+              <p className="text-base lg:text-lg font-bold font-serif text-[#364266]">
                 {formatPrice(currentShift.initialCash)}
               </p>
               <p className="text-[10px] text-[#897863] mt-0.5">Efectivo en base</p>
@@ -169,10 +215,24 @@ export const CashShiftPage: React.FC = () => {
               <Wallet size={16} className="text-emerald-600" />
             </div>
             <div className="mt-2">
-              <p className="text-lg lg:text-xl font-bold font-serif text-emerald-700">
-                {formatPrice(currentShift.cashSales)}
+              <p className="text-base lg:text-lg font-bold font-serif text-emerald-700">
+                +{formatPrice(currentShift.cashSales)}
               </p>
-              <p className="text-[10px] text-[#897863] mt-0.5">Cobrado en efectivo</p>
+              <p className="text-[10px] text-[#897863] mt-0.5">Ingreso efectivo</p>
+            </div>
+          </div>
+
+          {/* Retiros / Gastos Registrados */}
+          <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200/80 shadow-sm flex flex-col justify-between">
+            <div className="flex items-center justify-between text-red-800">
+              <span className="text-[11px] font-bold uppercase tracking-wider">Retiros / Gastos</span>
+              <MinusCircle size={16} className="text-red-600" />
+            </div>
+            <div className="mt-2">
+              <p className="text-base lg:text-lg font-bold font-serif text-red-700">
+                -{formatPrice(currentShift.totalWithdrawals || 0)}
+              </p>
+              <p className="text-[10px] text-red-600 mt-0.5">Salidas registradas</p>
             </div>
           </div>
 
@@ -183,7 +243,7 @@ export const CashShiftPage: React.FC = () => {
               <CreditCard size={16} className="text-blue-600" />
             </div>
             <div className="mt-2">
-              <p className="text-lg lg:text-xl font-bold font-serif text-[#364266]">
+              <p className="text-base lg:text-lg font-bold font-serif text-[#364266]">
                 {formatPrice(currentShift.debitSales)}
               </p>
               <p className="text-[10px] text-[#897863] mt-0.5">Datáfono Débito</p>
@@ -197,7 +257,7 @@ export const CashShiftPage: React.FC = () => {
               <CreditCard size={16} className="text-indigo-600" />
             </div>
             <div className="mt-2">
-              <p className="text-lg lg:text-xl font-bold font-serif text-[#364266]">
+              <p className="text-base lg:text-lg font-bold font-serif text-[#364266]">
                 {formatPrice(currentShift.creditSales)}
               </p>
               <p className="text-[10px] text-[#897863] mt-0.5">Datáfono Crédito</p>
@@ -211,7 +271,7 @@ export const CashShiftPage: React.FC = () => {
               <QrCode size={16} className="text-purple-600" />
             </div>
             <div className="mt-2">
-              <p className="text-lg lg:text-xl font-bold font-serif text-[#364266]">
+              <p className="text-base lg:text-lg font-bold font-serif text-[#364266]">
                 {formatPrice(currentShift.transferSales)}
               </p>
               <p className="text-[10px] text-[#897863] mt-0.5">Transferencias</p>
@@ -225,7 +285,7 @@ export const CashShiftPage: React.FC = () => {
               <TrendingUp size={16} className="text-[#364266]" />
             </div>
             <div className="mt-2">
-              <p className="text-lg lg:text-xl font-extrabold font-serif text-[#242D49]">
+              <p className="text-base lg:text-lg font-extrabold font-serif text-[#242D49]">
                 {formatPrice(currentShift.totalSales)}
               </p>
               <p className="text-[10px] text-[#897863] mt-0.5">{currentShift.totalOrders} pedidos</p>
@@ -254,6 +314,12 @@ export const CashShiftPage: React.FC = () => {
               <span>+ Ventas en efectivo:</span>
               <span className="font-semibold text-emerald-700">+{formatPrice(currentShift?.cashSales || 0)}</span>
             </div>
+            {(currentShift?.totalWithdrawals || 0) > 0 && (
+              <div className="flex justify-between text-xs text-red-600">
+                <span>- Retiros / Gastos de caja:</span>
+                <span className="font-semibold">-{formatPrice(currentShift?.totalWithdrawals || 0)}</span>
+              </div>
+            )}
             <div className="pt-2 border-t border-[#364266]/10 flex justify-between font-bold text-sm text-[#364266]">
               <span>Efectivo Esperado en Gaveta:</span>
               <span className="text-base font-serif">{formatPrice(expectedCash)}</span>
@@ -380,6 +446,48 @@ export const CashShiftPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Cash Movements / Withdrawals Table */}
+      {currentShift && currentShift.movements && currentShift.movements.length > 0 && (
+        <div className="bg-white p-6 rounded-3xl border border-[#364266]/10 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <MinusCircle size={20} className="text-red-600" />
+              <h2 className="font-serif font-bold text-lg text-[#364266]">
+                Retiros y Gastos de Caja Menor (del Turno Actual)
+              </h2>
+            </div>
+            <span className="text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-200">
+              Total salidas: -{formatPrice(currentShift.totalWithdrawals || 0)}
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b text-[#897863] uppercase tracking-wider font-semibold">
+                  <th className="py-2 px-3">Hora</th>
+                  <th className="py-2 px-3">Responsable</th>
+                  <th className="py-2 px-3">Concepto / Motivo</th>
+                  <th className="py-2 px-3 text-right">Monto Retirado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-[#364266]">
+                {currentShift.movements.map(m => (
+                  <tr key={m.id} className="hover:bg-red-50/30">
+                    <td className="py-2.5 px-3 font-mono">{formatTime(m.created_at)}</td>
+                    <td className="py-2.5 px-3 font-medium">{m.cashier_name || 'Cajero'}</td>
+                    <td className="py-2.5 px-3">{m.reason}</td>
+                    <td className="py-2.5 px-3 text-right font-bold text-red-600 font-serif">
+                      -{formatPrice(m.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Shift History Table */}
       <div className="bg-white p-6 rounded-3xl border border-[#364266]/10 shadow-sm space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
@@ -439,6 +547,74 @@ export const CashShiftPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Register Cash Withdrawal / Expense Modal */}
+      <AnimatePresence>
+        {showWithdrawalModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-red-200 space-y-4"
+            >
+              <div className="flex items-center gap-2 text-red-700">
+                <div className="w-10 h-10 rounded-2xl bg-red-100 flex items-center justify-center">
+                  <MinusCircle size={22} />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-lg text-[#364266]">
+                    Registrar Retiro / Gasto de Caja
+                  </h3>
+                  <p className="text-xs text-[#897863]">
+                    Salida de dinero menor (agua, frutas, aseo, compras de emergencia)
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="font-bold text-[#364266]">Monto a Retirar (COP) *</label>
+                  <input
+                    type="number"
+                    value={withdrawalAmount}
+                    onChange={(e) => setWithdrawalAmount(e.target.value)}
+                    placeholder="Ej. 20000"
+                    className="w-full mt-1 p-2.5 rounded-xl border border-gray-200 text-base font-bold text-red-700 focus:ring-2 focus:ring-red-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[#364266]">Motivo / Concepto del Gasto *</label>
+                  <input
+                    type="text"
+                    value={withdrawalReason}
+                    onChange={(e) => setWithdrawalReason(e.target.value)}
+                    placeholder="Ej. Compra de agua para el local, frutas, insumos..."
+                    className="w-full mt-1 p-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-red-400"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => setShowWithdrawalModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleCreateWithdrawal}
+                  disabled={isSubmittingWithdrawal}
+                  className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 shadow-md disabled:opacity-50"
+                >
+                  {isSubmittingWithdrawal ? 'Guardando...' : 'Confirmar Retiro'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Open New Shift Modal */}
       <AnimatePresence>
@@ -534,8 +710,14 @@ export const CashShiftPage: React.FC = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>Ventas Efectivo:</span>
-                    <span>{formatPrice(closedTicket.cashSales)}</span>
+                    <span>+{formatPrice(closedTicket.cashSales)}</span>
                   </div>
+                  {(closedTicket.totalWithdrawals || 0) > 0 && (
+                    <div className="flex justify-between text-red-600">
+                      <span>Retiros / Gastos:</span>
+                      <span>-{formatPrice(closedTicket.totalWithdrawals || 0)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Ventas Débito:</span>
                     <span>{formatPrice(closedTicket.debitSales)}</span>

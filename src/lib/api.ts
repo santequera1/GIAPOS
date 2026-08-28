@@ -97,6 +97,10 @@ export const api = {
   closeShift: (data: { shiftId?: number; actualCash: number; notes?: string }) =>
     request<any>('/shifts/close', { method: 'POST', body: JSON.stringify(data) }),
   getShiftsHistory: () => request<any[]>('/shifts/history'),
+  addCashMovement: (data: { shiftId?: number; amount: number; reason: string; type?: 'withdrawal' | 'deposit'; cashierName?: string }) =>
+    request<any>('/shifts/movement', { method: 'POST', body: JSON.stringify(data) }),
+  getCashMovements: (shiftId?: number) =>
+    request<any[]>(`/shifts/movements${shiftId ? '?shiftId=' + shiftId : ''}`),
 
   // Drivers
   getDrivers: () => request<any[]>('/drivers'),

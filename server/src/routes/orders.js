@@ -37,6 +37,7 @@ function formatOrder(db, order) {
     paymentStatus: order.payment_status,
     cashReceived: order.cash_received || 0,
     cashChange: order.cash_change || 0,
+    paymentSplit: order.payment_split ? (typeof order.payment_split === 'string' ? JSON.parse(order.payment_split) : order.payment_split) : undefined,
     createdAt: order.created_at,
     driverId: order.driver_id || undefined,
     receiptImage: order.receipt_image || undefined,
@@ -87,6 +88,7 @@ router.post('/', (req, res) => {
     paymentStatus = 'paid',
     cashReceived = 0,
     cashChange = 0,
+    paymentSplit,
     receiptImage,
     notes = '',
     shiftId,
@@ -102,6 +104,7 @@ router.post('/', (req, res) => {
   const custPhone = customer.phone?.trim() || '';
   const custAddress = customer.address?.trim() || '';
   const isElectronicInvoice = customer.isElectronicInvoice ? 1 : 0;
+  const splitJson = paymentSplit ? JSON.stringify(paymentSplit) : null;
 
   const db = getDb();
 
@@ -125,8 +128,8 @@ router.post('/', (req, res) => {
     INSERT INTO orders (
       type, status, customer_name, customer_doc, customer_email, customer_phone, customer_address,
       is_electronic_invoice, table_number, subtotal, delivery_fee, discount, total,
-      payment_method, payment_status, cash_received, cash_change, receipt_image, notes, shift_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      payment_method, payment_status, cash_received, cash_change, receipt_image, notes, shift_id, payment_split
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     type, status,
     custName, custDoc, custEmail, custPhone, custAddress,
@@ -137,7 +140,8 @@ router.post('/', (req, res) => {
     cashReceived, cashChange,
     receiptImage || null,
     notes,
-    shiftId || null
+    shiftId || null,
+    splitJson
   );
 
   const orderId = result.lastInsertRowid;

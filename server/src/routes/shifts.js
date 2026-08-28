@@ -1,4 +1,4 @@
-﻿const { Router } = require('express');
+const { Router } = require('express');
 const { getDb } = require('../db');
 
 const router = Router();
@@ -7,31 +7,54 @@ const router = Router();
 function getShiftLiveStats(db, shift) {
   const filter = shift && shift.id ? 'AND shift_id = ' + shift.id : "AND date(created_at) = date('now', '-5 hours')";
 
-  // Sales totals by payment method
-  const salesByPayment = db.prepare(`
-    SELECT
-      payment_method,
-      COALESCE(SUM(total), 0) as total,
-      COUNT(*) as count
+  // Sales totals including split payments
+  const orders = db.prepare(`
+    SELECT payment_method, total, payment_split
     FROM orders
     WHERE status != 'cancelled' ${filter}
-    GROUP BY payment_method
   `).all();
 
   let cashSales = 0;
   let debitSales = 0;
   let creditSales = 0;
   let transferSales = 0;
-  let totalOrders = 0;
+  let totalOrders = orders.length;
   let totalSales = 0;
 
-  for (const row of salesByPayment) {
-    totalOrders += row.count;
-    totalSales += row.total;
-    if (row.payment_method === 'cash') cashSales += row.total;
-    else if (row.payment_method === 'card_debit') debitSales += row.total;
-    else if (row.payment_method === 'card_credit' || row.payment_method === 'card') creditSales += row.total;
-    else if (row.payment_method === 'transfer') transferSales += row.total;
+  for (const o of orders) {
+    totalSales += o.total;
+    if (o.payment_split) {
+      try {
+        const split = typeof o.payment_split === 'string' ? JSON.parse(o.payment_split) : o.payment_split;
+        const addSplit = (m, amt) => {
+          if (m === 'cash') cashSales += amt;
+          else if (m === 'card_debit') debitSales += amt;
+          else if (m === 'card_credit' || m === 'card') creditSales += amt;
+          else if (m === 'transfer') transferSales += amt;
+        };
+        if (split.method1 && split.amount1) addSplit(split.method1, Number(split.amount1));
+        if (split.method2 && split.amount2) addSplit(split.method2, Number(split.amount2));
+        continue;
+      } catch (e) {
+        // fallback
+      }
+    }
+
+    if (o.payment_method === 'cash') cashSales += o.total;
+    else if (o.payment_method === 'card_debit') debitSales += o.total;
+    else if (o.payment_method === 'card_credit' || o.payment_method === 'card') creditSales += o.total;
+    else if (o.payment_method === 'transfer') transferSales += o.total;
+  }
+
+  // Cash Movements (Withdrawals / Deposits)
+  const movementFilter = shift && shift.id ? 'WHERE shift_id = ' + shift.id : "WHERE date(created_at) = date('now', '-5 hours')";
+  const movements = db.prepare(`SELECT * FROM cash_movements ${movementFilter} ORDER BY created_at DESC`).all();
+  let totalWithdrawals = 0;
+  let totalDeposits = 0;
+
+  for (const m of movements) {
+    if (m.type === 'withdrawal') totalWithdrawals += m.amount;
+    else if (m.type === 'deposit') totalDeposits += m.amount;
   }
 
   // Flavors / products breakdown
@@ -50,7 +73,7 @@ function getShiftLiveStats(db, shift) {
   `).all();
 
   const initialCash = (shift && shift.initial_cash) || 0;
-  const expectedCash = initialCash + cashSales;
+  const expectedCash = initialCash + cashSales + totalDeposits - totalWithdrawals;
 
   return {
     ...shift,
@@ -61,7 +84,10 @@ function getShiftLiveStats(db, shift) {
     transferSales,
     totalSales,
     totalOrders,
+    totalWithdrawals,
+    totalDeposits,
     expectedCash,
+    movements,
     flavorStats,
   };
 }
@@ -72,7 +98,6 @@ router.get('/current', (req, res) => {
   let shift = db.prepare("SELECT * FROM cash_shifts WHERE status = 'open' ORDER BY opened_at DESC LIMIT 1").get();
 
   if (!shift) {
-    // If no shift is open, create one automatically for convenience in convention
     const result = db.prepare(`
       INSERT INTO cash_shifts (user_id, cashier_name, opened_at, initial_cash, status, notes)
       VALUES (?, ?, datetime('now', '-5 hours'), 100000, 'open', 'Turno Convención')
@@ -82,6 +107,47 @@ router.get('/current', (req, res) => {
 
   const live = getShiftLiveStats(db, shift);
   res.json(live);
+});
+
+// Register cash movement (withdrawal / deposit)
+router.post('/movement', (req, res) => {
+  const { shiftId, type = 'withdrawal', amount, reason, cashierName } = req.body;
+  if (!amount || amount <= 0 || !reason?.trim()) {
+    return res.status(400).json({ error: 'Monto y motivo del retiro son requeridos' });
+  }
+
+  const db = getDb();
+  let shift = shiftId
+    ? db.prepare('SELECT * FROM cash_shifts WHERE id = ?').get(shiftId)
+    : db.prepare("SELECT * FROM cash_shifts WHERE status = 'open' ORDER BY opened_at DESC LIMIT 1").get();
+
+  if (!shift) {
+    return res.status(404).json({ error: 'No hay turno abierto' });
+  }
+
+  const name = cashierName || req.user?.name || shift.cashier_name || 'Cajero';
+  const result = db.prepare(`
+    INSERT INTO cash_movements (shift_id, type, amount, reason, cashier_name, created_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now', '-5 hours'))
+  `).run(shift.id, type, Number(amount), reason.trim(), name);
+
+  const movement = db.prepare('SELECT * FROM cash_movements WHERE id = ?').get(result.lastInsertRowid);
+  const live = getShiftLiveStats(db, shift);
+
+  res.status(201).json({ movement, shift: live });
+});
+
+// Get movements for a shift
+router.get('/movements', (req, res) => {
+  const { shiftId } = req.query;
+  const db = getDb();
+  let shift = shiftId
+    ? db.prepare('SELECT * FROM cash_shifts WHERE id = ?').get(shiftId)
+    : db.prepare("SELECT * FROM cash_shifts WHERE status = 'open' ORDER BY opened_at DESC LIMIT 1").get();
+
+  if (!shift) return res.json([]);
+  const movements = db.prepare('SELECT * FROM cash_movements WHERE shift_id = ? ORDER BY created_at DESC').all(shift.id);
+  res.json(movements);
 });
 
 // Open a new shift
