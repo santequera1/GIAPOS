@@ -192,7 +192,7 @@ function migrateSchema() {
   addCol('customers', 'email', "TEXT DEFAULT ''");
   addCol('customers', 'is_company', "INTEGER DEFAULT 0");
 
-  // Sync Categories & Special Products for Gia Gelatería
+    // Sync Categories & Special Products for Gia Gelatería
   try {
     const existingCat = db.prepare('SELECT id FROM categories WHERE id = 6').get();
     if (!existingCat) {
@@ -201,7 +201,44 @@ function migrateSchema() {
     db.prepare("INSERT OR REPLACE INTO categories (id, name, emoji, color) VALUES (4, 'Bebidas & Aguas', '🥤', '#364266')").run();
     db.prepare("INSERT OR REPLACE INTO categories (id, name, emoji, color) VALUES (5, 'Adicionales & Toppings', '🧇', '#897863')").run();
 
-    // Ensure Affogato Clásico
+    // 1. Remove Arroz con Leche as requested
+    db.prepare("DELETE FROM products WHERE name LIKE '%Arroz con Leche%'").run();
+
+    const gelatoSizesStd = JSON.stringify([
+      { name: 'Pequeño (1 sabor)', price: 15000 },
+      { name: 'Grande (2 sabores)', price: 21000 },
+      { name: 'Litro (2 sabores)', price: 70000 },
+    ]);
+
+    const gelatoSizesSA = JSON.stringify([
+      { name: 'Pequeño (1 sabor)', price: 17000 },
+      { name: 'Grande (2 sabores)', price: 23000 },
+      { name: 'Litro (2 sabores)', price: 75000 },
+    ]);
+
+    // 2. Ensure Queso y Bocadillo
+    const quesoBocadillo = db.prepare("SELECT id FROM products WHERE name LIKE '%Queso%Bocadillo%' OR name LIKE '%Bocadillo%Queso%'").get();
+    if (!quesoBocadillo) {
+      db.prepare(`
+        INSERT INTO products (name, category_id, price, available, image, description, sizes, color_bg, color_accent, featured)
+        VALUES ('Queso y Bocadillo', 1, 15000, 1, '/images/gelatos/yogurt-amarenas.webp', 'Queso campesino con dulce de guayaba y bocadillo veleño', ?, '#F8EDEB', '#B03A5B', 1)
+      `).run(gelatoSizesStd);
+    } else {
+      db.prepare("UPDATE products SET name = 'Queso y Bocadillo', price = 15000, sizes = ?, available = 1 WHERE id = ?").run(gelatoSizesStd, quesoBocadillo.id);
+    }
+
+    // 3. Ensure Pistacho Sin Azúcar (SA)
+    const pistachoSA = db.prepare("SELECT id FROM products WHERE name LIKE '%Pistacho%Sin Az%' OR name LIKE '%SA Pistacho%' OR name LIKE '%Pistacho SA%'").get();
+    if (!pistachoSA) {
+      db.prepare(`
+        INSERT INTO products (name, category_id, price, available, image, description, sizes, color_bg, color_accent, featured)
+        VALUES ('Pistacho Sin Azúcar', 3, 17000, 1, '/images/gelatos/pistacho.webp', 'Auténtico pistacho italiano 100% puro sin azúcar añadida (SA)', ?, '#EAF2E8', '#4E7A4A', 1)
+      `).run(gelatoSizesSA);
+    } else {
+      db.prepare("UPDATE products SET name = 'Pistacho Sin Azúcar', price = 17000, sizes = ?, available = 1 WHERE id = ?").run(gelatoSizesSA, pistachoSA.id);
+    }
+
+    // 4. Ensure Affogato Clásico ($21.000)
     const affogato = db.prepare("SELECT id FROM products WHERE name LIKE '%Affogato%'").get();
     if (!affogato) {
       db.prepare(`
@@ -210,29 +247,15 @@ function migrateSchema() {
       `).run();
     }
 
-    // Ensure Aguas & Adicionales
-    const aguaSinGas = db.prepare("SELECT id FROM products WHERE name LIKE '%Agua%Sin Gas%' OR name = 'Agua Cristal'").get();
-    if (!aguaSinGas) {
-      db.prepare(`
-        INSERT INTO products (name, category_id, price, available, image, description)
-        VALUES ('Agua Cristal (Sin Gas)', 4, 6000, 1, '/images/products/agua.webp', 'Botella 500ml')
-      `).run();
-    }
-
-    const aguaConGas = db.prepare("SELECT id FROM products WHERE name LIKE '%Agua%Con Gas%'").get();
-    if (!aguaConGas) {
-      db.prepare(`
-        INSERT INTO products (name, category_id, price, available, image, description)
-        VALUES ('Agua con Gas Manantial / San Pellegrino', 4, 7000, 1, '/images/products/agua-gas.webp', 'Botella 300ml con gas refrescante')
-      `).run();
-    }
-
+    // 5. Ensure Salsas (matching Siigo codes: Pistacho $6.000, Chocolate $4.000)
     const salsaPistacho = db.prepare("SELECT id FROM products WHERE name LIKE '%Salsa%Pistacho%'").get();
     if (!salsaPistacho) {
       db.prepare(`
         INSERT INTO products (name, category_id, price, available, image, description)
-        VALUES ('Salsa de Pistacho Artesanal', 5, 4000, 1, null, 'Cremosa salsa de pistacho italiano')
+        VALUES ('Salsa de Pistacho Artesanal', 5, 6000, 1, null, 'Cremosa salsa de pistacho italiano')
       `).run();
+    } else {
+      db.prepare("UPDATE products SET price = 6000 WHERE id = ?").run(salsaPistacho.id);
     }
 
     const salsaChoco = db.prepare("SELECT id FROM products WHERE name LIKE '%Salsa%Chocolate%'").get();
@@ -240,6 +263,33 @@ function migrateSchema() {
       db.prepare(`
         INSERT INTO products (name, category_id, price, available, image, description)
         VALUES ('Salsa de Chocolate Belga', 5, 4000, 1, null, 'Salsa tibia de cacao artesanal')
+      `).run();
+    } else {
+      db.prepare("UPDATE products SET price = 4000 WHERE id = ?").run(salsaChoco.id);
+    }
+
+    // 6. Ensure Bebidas Siigo
+    const cafeAmericano = db.prepare("SELECT id FROM products WHERE name LIKE '%Café%Americano%' OR name LIKE '%Nespresso%'").get();
+    if (!cafeAmericano) {
+      db.prepare(`
+        INSERT INTO products (name, category_id, price, available, image, description)
+        VALUES ('Café Colombia Americano Nespresso', 4, 7000, 1, null, 'Café colombiano de especialidad Nespresso')
+      `).run();
+    }
+
+    const aguaHatsu = db.prepare("SELECT id FROM products WHERE name LIKE '%Hatsu%' OR name LIKE '%Agua Cristal%' OR name LIKE '%Agua%Sin Gas%'").get();
+    if (!aguaHatsu) {
+      db.prepare(`
+        INSERT INTO products (name, category_id, price, available, image, description)
+        VALUES ('Agua Hatsu 300 ml', 4, 6000, 1, '/images/products/agua.webp', 'Botella 300ml refrescante')
+      `).run();
+    }
+
+    const toteBag = db.prepare("SELECT id FROM products WHERE name LIKE '%Tote Bag%'").get();
+    if (!toteBag) {
+      db.prepare(`
+        INSERT INTO products (name, category_id, price, available, image, description)
+        VALUES ('Tote Bag GIA', 5, 25000, 1, null, 'Bolsa ecológica de tela conmemorativa Gia')
       `).run();
     }
   } catch (err) {

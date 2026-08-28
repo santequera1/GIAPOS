@@ -313,6 +313,17 @@ export const POSPage: React.FC = () => {
     setFirstFlavor(null);
   };
 
+  // Gelato pricing helper (handles special prices like Pistacho Sin Azúcar)
+  const getGelatoItemPrice = (format: GelatoFormat, f1: Product, f2?: Product | null) => {
+    const isSpecialSA = f1.name.toLowerCase().includes('sin azúcar') || (f2 && f2.name.toLowerCase().includes('sin azúcar'));
+    if (isSpecialSA) {
+      if (format.id === 'vaso_pequeno' || format.id === 'cono_pequeno') return 17000;
+      if (format.id === 'vaso_grande' || format.id === 'cono_grande') return 23000;
+      if (format.id === 'litro') return 75000;
+    }
+    return format.price;
+  };
+
   // Flavors Dispatch Logic
   const handleFlavorClick = (flavor: Product) => {
     if (!flavor.available) {
@@ -321,6 +332,7 @@ export const POSPage: React.FC = () => {
     }
 
     if (selectedFormat.scoops === 1) {
+      const itemPrice = getGelatoItemPrice(selectedFormat, flavor);
       const containerLabel = selectedFormat.container === 'Cono' ? 'Cono' : 'Vaso';
       addItemToCart({
         productId: flavor.id,
@@ -328,7 +340,7 @@ export const POSPage: React.FC = () => {
         size: `${selectedFormat.name} (${selectedFormat.capacity})`,
         flavors: flavor.name,
         quantity: 1,
-        price: selectedFormat.price,
+        price: itemPrice,
         notes: '',
       });
       toast.success(`Agregado: ${selectedFormat.name} (${flavor.name})`);
@@ -337,6 +349,7 @@ export const POSPage: React.FC = () => {
         setFirstFlavor(flavor);
       } else {
         const isSame = firstFlavor.id === flavor.id;
+        const itemPrice = getGelatoItemPrice(selectedFormat, firstFlavor, flavor);
         const containerLabel = selectedFormat.container === 'Cono' ? 'Cono' : selectedFormat.container === 'Familiar' ? 'Litro Familiar' : 'Vaso';
         const combinationName = isSame
           ? `Gelato en ${containerLabel} (${selectedFormat.capacity}) — ${flavor.name}`
@@ -350,7 +363,7 @@ export const POSPage: React.FC = () => {
           size: `${selectedFormat.name} (${selectedFormat.capacity})`,
           flavors: flavorsList,
           quantity: 1,
-          price: selectedFormat.price,
+          price: itemPrice,
           notes: '',
         });
 
@@ -362,6 +375,7 @@ export const POSPage: React.FC = () => {
 
   const handleAddFirstFlavorSolo = () => {
     if (!firstFlavor) return;
+    const itemPrice = getGelatoItemPrice(selectedFormat, firstFlavor);
     const containerLabel = selectedFormat.container === 'Cono' ? 'Cono' : selectedFormat.container === 'Familiar' ? 'Litro Familiar' : 'Vaso';
     addItemToCart({
       productId: firstFlavor.id,
@@ -369,7 +383,7 @@ export const POSPage: React.FC = () => {
       size: `${selectedFormat.name} (${selectedFormat.capacity})`,
       flavors: firstFlavor.name,
       quantity: 1,
-      price: selectedFormat.price,
+      price: itemPrice,
       notes: '',
     });
     toast.success(`Agregado: ${selectedFormat.name} (${firstFlavor.name})`);
@@ -687,7 +701,7 @@ export const POSPage: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-bold tracking-wider uppercase text-[#897863]">
-                  12 Sabores Gia Gelatería
+                  Sabores Gia Gelatería
                 </span>
                 <div className="relative w-48 lg:w-64">
                   <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#897863]" />
@@ -705,6 +719,7 @@ export const POSPage: React.FC = () => {
                 {gelatoFlavors.map(flavor => {
                   const isFirstSelected = firstFlavor?.id === flavor.id;
                   const bgColor = flavor.color_bg || '#FAF8EA';
+                  const isSinAzucar = flavor.name.toLowerCase().includes('sin azúcar');
 
                   return (
                     <div
@@ -750,9 +765,16 @@ export const POSPage: React.FC = () => {
 
                       {/* Details */}
                       <div>
-                        <h3 className="font-sans font-bold text-sm lg:text-base text-[#242D49] leading-tight truncate">
-                          {flavor.name}
-                        </h3>
+                        <div className="flex items-center justify-between gap-1">
+                          <h3 className="font-sans font-bold text-sm lg:text-base text-[#242D49] leading-tight truncate">
+                            {flavor.name}
+                          </h3>
+                        </div>
+                        {isSinAzucar && (
+                          <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">
+                            🌿 Sin Azúcar ($17k)
+                          </span>
+                        )}
                         <p className="font-sans text-[11px] text-[#6B5E4F] not-italic line-clamp-1 mt-0.5 font-normal">
                           {flavor.description || 'Gelato artesanal'}
                         </p>
