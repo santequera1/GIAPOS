@@ -1,0 +1,42 @@
+/* Gia Gelatería — tokens de color (fuente de verdad: brand.json) */
+:root {
+  /* Principales */
+  --gia-crema: #FEF3DE;
+  --gia-azul: #364266;
+  --gia-azul-boton: #344268;
+  --gia-azul-oscuro: #242D49;
+  --gia-oliva: #C6BF81;
+  --gia-oliva-patron: #C9C58B;
+  --gia-cafe: #897863;
+  --gia-crema-texto: #FEF3DE;
+
+  /* Secundarios */
+  --gia-oliva-icono: #8F9053;
+  --gia-chip-activo: #E7E6CC;
+  --gia-tarjeta-crema: #EFEDD8;
+  --gia-tarjeta-luz: #FAF8EA;
+  --gia-crema-pildora: #F5E6C0;
+  --gia-crema-profunda: #EBD79E;
+  --gia-vino: #CC3366;
+  --gia-blanco: #FFFFFF;
+
+  /* Gradientes */
+  --gia-grad-azul: linear-gradient(180deg, #40507E, #2A3453);
+  --gia-grad-crema: linear-gradient(180deg, #F7EFD9, #EFE3C0);
+
+  /* Translúcidos */
+  --gia-divisor: rgba(54, 66, 102, 0.14);
+  --gia-borde-vidrio: rgba(255, 255, 255, 0.7);
+  --gia-texto-sobre-oscuro: rgba(255, 255, 255, 0.55);
+
+  /* Tipografía (ver fonts.css) */
+  --gia-font-cuerpo: 'Lapture', Georgia, 'Times New Roman', serif;
+  --gia-font-titulos: 'Playfair Display', Georgia, serif;
+  --gia-font-acento: 'Great Vibes', cursive;
+
+  /* Forma */
+  --gia-radio-tarjeta: 36px;
+  --gia-radio-tarjeta-compacta: 24px;
+  --gia-radio-chip: 24px;
+  --gia-radio-boton: 36px;
+}

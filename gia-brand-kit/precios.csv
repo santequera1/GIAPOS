@@ -1,0 +1,4 @@
+id,nombre,descripcion,sabores,precio_cop
+pequeno,Pequeño,Un solo sabor,1,15000
+grande,Grande,Dos sabores,2,21000
+litro,Litro,Dos sabores,2,70000

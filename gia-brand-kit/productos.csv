@@ -1,0 +1,13 @@
+id,nombre,subtitulo,categoria,destacado,color_fondo,color_acento,imagen
+pistacho,Pistacho,Auténtica pasta de pistacho,clasico,si,#E7EAD9,#7C8455,images/gelatos/pistacho.webp
+chocolate,Chocolate,Intenso y clásico,clasico,no,#EAD9CB,#6B4226,images/gelatos/chocolate.webp
+avellana,Avellana,Tostada y cremosa,clasico,no,#EFE0D1,#8B5E3C,images/gelatos/avellana.webp
+vainilla,Vainilla,Clásica y suave,clasico,no,#F7EED8,#C9A24B,images/gelatos/vainilla.webp
+stracciatella,Stracciatella,Crema y chispas de chocolate,clasico,no,#F1EEE7,#4A4A4A,images/gelatos/stracciatella.webp
+milo,Milo,El favorito de casa,especial,no,#EDDECC,#7A5230,images/gelatos/milo.webp
+arroz-con-leche,Arroz con Leche,Sabor de la abuela,especial,no,#F3EBDA,#B99B62,images/gelatos/arroz-con-leche.webp
+coco-almendra,Coco y Almendra,Cremoso y crocante,especial,no,#F4F0E6,#A48B5F,images/gelatos/coco-almendra.webp
+corozo,Corozo,Fruto auténtico del Caribe,frutal,no,#F7D9DE,#B03A5B,images/gelatos/corozo.webp
+maracuya,Maracuyá,Cítrico y refrescante,frutal,no,#FBEFCF,#D9A220,images/gelatos/maracuya.webp
+maracuya-corozo,Maracuyá y Corozo,Dúo caribeño,frutal,no,#FAE3D0,#C75B3F,images/gelatos/maracuya-corozo.webp
+yogurt-amarenas,Yogurt con Amarenas,Con cerezas amarena,frutal,no,#F6DFE3,#A03B52,images/gelatos/yogurt-amarenas.webp

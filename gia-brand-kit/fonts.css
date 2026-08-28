@@ -1,0 +1,13 @@
+/* Gia Gelatería — @font-face (rutas relativas a este archivo) */
+@font-face { font-family: 'Lapture'; src: url('fonts/Lapture-Regular.otf') format('opentype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Lapture'; src: url('fonts/Lapture-Semibold.otf') format('opentype'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Lapture Display'; src: url('fonts/Lapture-Display.otf') format('opentype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Lapture Display'; src: url('fonts/Lapture-Display-Semibold.otf') format('opentype'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Lapture Caption'; src: url('fonts/Lapture-Caption.otf') format('opentype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Lapture Caption'; src: url('fonts/Lapture-Caption-Semibold.otf') format('opentype'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Lapture Subhead'; src: url('fonts/Lapture-Subhead.otf') format('opentype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Lapture Subhead'; src: url('fonts/Lapture-Subhead-Semibold.otf') format('opentype'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Playfair Display'; src: url('fonts/PlayfairDisplay-SemiBold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Playfair Display'; src: url('fonts/PlayfairDisplay-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Playfair Display'; src: url('fonts/PlayfairDisplay-Italic.ttf') format('truetype'); font-weight: 500; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Great Vibes'; src: url('fonts/GreatVibes-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }

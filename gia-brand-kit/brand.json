@@ -1,0 +1,202 @@
+{
+  "version": "1.0.0",
+  "actualizado": "2026-07-29",
+  "negocio": {
+    "nombre": "Gia Gelatería",
+    "nombreCorto": "GIA",
+    "slogan": "Auténtico Gelato artesanal",
+    "descripcion": "Gelato artesanal con alma clásica y sabor inolvidable. Entre el cielo y GIA… me quedo aquí. ✨",
+    "descripcionLarga": "En Gia Gelatería, cada gelato es una obra de arte creada con ingredientes selectos y técnicas tradicionales italianas.",
+    "direccion": "Calle Baloco #2-22, Centro Histórico, Cartagena, Colombia 130001",
+    "direccionCorta": "Calle Baloco #2-22, Cartagena",
+    "ciudad": "Cartagena de Indias",
+    "pais": "Colombia",
+    "moneda": "COP",
+    "idioma": "es-CO",
+    "sitioWeb": "https://giagelateria.com",
+    "repositorio": "https://github.com/santequera1/giagelateria",
+    "contacto": {
+      "whatsappNumero": "573007856068",
+      "whatsappDisplay": "300 785 6068",
+      "whatsappUrl": "https://api.whatsapp.com/send/?phone=573007856068&text=%C2%A1Hola%20GIA!&type=phone_number&app_absent=0",
+      "instagramHandle": "@giagelateria",
+      "instagramUrl": "https://www.instagram.com/giagelateria/",
+      "facebookUrl": "https://www.facebook.com/profile.php?id=61575811243564",
+      "rappiUrl": "https://www.rappi.com.co/restaurantes/900466621-gia-gelateria",
+      "googleMapsUrl": "https://maps.app.goo.gl/68MaxBkhQ5aXu9AY7",
+      "googleMapsQuery": "Centro Historico, Calle Baloco, CL. 33, Gia gelateria, Cartagena, Colombia 130001"
+    },
+    "instagramPostsDestacados": [
+      { "path": "p/DO3tLdiDn5X", "url": "https://www.instagram.com/p/DO3tLdiDn5X/", "miniatura": "images/instagram/DO3tLdiDn5X.webp" },
+      { "path": "reel/DZ5bkHHJ2Yd", "url": "https://www.instagram.com/reel/DZ5bkHHJ2Yd/", "miniatura": "images/instagram/DZ5bkHHJ2Yd.webp" },
+      { "path": "p/DYUvzmUjodq", "url": "https://www.instagram.com/p/DYUvzmUjodq/", "miniatura": "images/instagram/DYUvzmUjodq.webp" },
+      { "path": "p/DYcmM1_jhyT", "url": "https://www.instagram.com/p/DYcmM1_jhyT/", "miniatura": "images/instagram/DYcmM1_jhyT.webp" },
+      { "path": "p/DVerXL3Dj2u", "url": "https://www.instagram.com/p/DVerXL3Dj2u/", "miniatura": "images/instagram/DVerXL3Dj2u.webp" }
+    ]
+  },
+  "colores": {
+    "descripcion": "Paleta crema / azul marino / oliva del menú impreso y del sitio.",
+    "principales": {
+      "crema":        { "hex": "#FEF3DE", "uso": "Fondo de la app y base exacta del patrón zigzag" },
+      "azulMarino":   { "hex": "#364266", "uso": "Títulos, texto principal, contenedor del carrito" },
+      "azulBoton":    { "hex": "#344268", "uso": "Botones principales (Agregar al carrito, +, stepper)" },
+      "azulOscuro":   { "hex": "#242D49", "uso": "Sombras, gradiente oscuro" },
+      "oliva":        { "hex": "#C6BF81", "uso": "Acentos: bordes de chips, subrayado de títulos, botón dorado" },
+      "olivaPatron":  { "hex": "#C9C58B", "uso": "Tono del patrón zigzag (aprox.)" },
+      "cafeSuave":    { "hex": "#897863", "uso": "Subtítulos, texto secundario, captions" },
+      "cremaTexto":   { "hex": "#FEF3DE", "uso": "Texto sobre azul (botones)" }
+    },
+    "secundarios": {
+      "olivaIcono":    { "hex": "#8F9053", "uso": "Íconos inactivos de chips" },
+      "chipActivo":    { "hex": "#E7E6CC", "uso": "Fondo de chip / botón circular activo" },
+      "tarjetaCrema":  { "hex": "#EFEDD8", "uso": "Fondo de tarjeta de vidrio" },
+      "tarjetaLuz":    { "hex": "#FAF8EA", "uso": "Highlight de tarjeta" },
+      "cremaPildora":  { "hex": "#F5E6C0", "uso": "Píldoras de precio, insignias" },
+      "cremaProfunda": { "hex": "#EBD79E", "uso": "Variante más intensa de crema" },
+      "vino":          { "hex": "#CC3366", "uso": "Color de enlaces del sitio original (uso puntual)" },
+      "blanco":        { "hex": "#FFFFFF", "uso": "Fondos de tarjetas de contenido" },
+      "rappi":         { "hex": "#FF441F", "uso": "Solo para el logo de Rappi" }
+    },
+    "gradientes": {
+      "azulCarrito": ["#40507E", "#2A3453"],
+      "resumenCrema": ["#F7EFD9", "#EFE3C0"]
+    },
+    "translucidos": {
+      "divisor": "rgba(54,66,102,0.14)",
+      "textoSobreOscuroSuave": "rgba(255,255,255,0.55)",
+      "bordeVidrio": "rgba(255,255,255,0.7)",
+      "franjaInstagram": "rgba(52,66,104,0.92)"
+    },
+    "porSabor": {
+      "pistacho":        { "fondo": "#E7EAD9", "acento": "#7C8455" },
+      "chocolate":       { "fondo": "#EAD9CB", "acento": "#6B4226" },
+      "avellana":        { "fondo": "#EFE0D1", "acento": "#8B5E3C" },
+      "vainilla":        { "fondo": "#F7EED8", "acento": "#C9A24B" },
+      "stracciatella":   { "fondo": "#F1EEE7", "acento": "#4A4A4A" },
+      "milo":            { "fondo": "#EDDECC", "acento": "#7A5230" },
+      "arroz-con-leche": { "fondo": "#F3EBDA", "acento": "#B99B62" },
+      "coco-almendra":   { "fondo": "#F4F0E6", "acento": "#A48B5F" },
+      "corozo":          { "fondo": "#F7D9DE", "acento": "#B03A5B" },
+      "maracuya":        { "fondo": "#FBEFCF", "acento": "#D9A220" },
+      "maracuya-corozo": { "fondo": "#FAE3D0", "acento": "#C75B3F" },
+      "yogurt-amarenas": { "fondo": "#F6DFE3", "acento": "#A03B52" }
+    }
+  },
+  "tipografia": {
+    "descripcion": "Serif elegante italiana. Lapture es la fuente oficial del sitio (jaf-lapture). El sitio original usaba The Seasons (de pago) para títulos en mayúsculas; Playfair Display es el reemplazo libre.",
+    "familias": {
+      "cuerpo": {
+        "nombre": "Lapture",
+        "archivos": {
+          "regular": "fonts/Lapture-Regular.otf",
+          "semibold": "fonts/Lapture-Semibold.otf",
+          "display": "fonts/Lapture-Display.otf",
+          "displaySemibold": "fonts/Lapture-Display-Semibold.otf",
+          "caption": "fonts/Lapture-Caption.otf",
+          "captionSemibold": "fonts/Lapture-Caption-Semibold.otf",
+          "subhead": "fonts/Lapture-Subhead.otf",
+          "subheadSemibold": "fonts/Lapture-Subhead-Semibold.otf"
+        },
+        "uso": "Párrafos, botones, chips, precios, etiquetas",
+        "licencia": "Comercial (JAF Lapture) — verificar licencia antes de redistribuir"
+      },
+      "titulos": {
+        "nombre": "Playfair Display",
+        "archivos": {
+          "semibold": "fonts/PlayfairDisplay-SemiBold.ttf",
+          "bold": "fonts/PlayfairDisplay-Bold.ttf",
+          "italic": "fonts/PlayfairDisplay-Italic.ttf"
+        },
+        "uso": "Nombres de sabores, títulos de sección, cantidades, totales; la itálica para subtítulos",
+        "licencia": "OFL (Google Fonts)",
+        "alternativas": ["Cormorant Garamond", "Marcellus", "The Seasons (original del sitio, de pago)"]
+      },
+      "acento": {
+        "nombre": "Great Vibes",
+        "archivos": { "regular": "fonts/GreatVibes-Regular.ttf" },
+        "uso": "Palabra cursiva de acento (Gelato en el slogan), estilo del Gelatería del logo",
+        "licencia": "OFL (Google Fonts)"
+      },
+      "sistemaFallback": "Georgia, Times New Roman, serif"
+    },
+    "escala": {
+      "sloganBase":       { "familia": "titulos/semibold", "px": 22 },
+      "sloganScript":     { "familia": "acento", "px": 36 },
+      "tituloSeccion":    { "familia": "titulos/semibold", "px": 22 },
+      "subtituloSeccion": { "familia": "cuerpo/semibold", "px": 18 },
+      "nombreSabor":      { "familia": "titulos/bold", "px": 25 },
+      "subtituloSabor":   { "familia": "titulos/italic", "px": 14 },
+      "precio":           { "familia": "cuerpo/semibold", "px": 16 },
+      "boton":            { "familia": "cuerpo/semibold", "px": 17 },
+      "chip":             { "familia": "cuerpo/semibold", "px": 15 },
+      "caption":          { "familia": "cuerpo/regular", "px": 13 },
+      "cantidadGrande":   { "familia": "titulos/bold", "px": 42 },
+      "totalCarrito":     { "familia": "titulos/bold", "px": 24 }
+    }
+  },
+  "formaYEspaciado": {
+    "radioTarjeta": 36,
+    "radioTarjetaCompacta": 24,
+    "radioChip": 24,
+    "radioBoton": 36,
+    "alturaChip": 48,
+    "alturaBotonPrincipal": 72,
+    "paddingHorizontal": 28,
+    "sombraSuave": { "color": "#8C8A62", "opacidad": 0.18, "radio": 30, "offsetY": 16 },
+    "sombraBoton": { "color": "#242D49", "opacidad": 0.35, "radio": 14, "offsetY": 8 }
+  },
+  "tamanos": [
+    { "id": "pequeno", "nombre": "Pequeño", "descripcion": "Un solo sabor", "sabores": 1, "precio": 15000 },
+    { "id": "grande",  "nombre": "Grande",  "descripcion": "Dos sabores",   "sabores": 2, "precio": 21000 },
+    { "id": "litro",   "nombre": "Litro",   "descripcion": "Dos sabores",   "sabores": 2, "precio": 70000 }
+  ],
+  "formatoPrecio": { "simbolo": "$", "separadorMiles": ".", "decimales": 0, "ejemplo": "$ 15.000", "prefijoDesde": "Desde " },
+  "categorias": [
+    { "id": "clasico",  "nombre": "Clásicos" },
+    { "id": "frutal",   "nombre": "Frutales" },
+    { "id": "especial", "nombre": "Especiales" }
+  ],
+  "productos": [
+    { "id": "pistacho",        "nombre": "Pistacho",            "subtitulo": "Auténtica pasta de pistacho",  "categoria": "clasico",  "destacado": true,  "imagen": "images/gelatos/pistacho.webp",        "imagenOriginal": "images/gelatos/original/pistacho.png" },
+    { "id": "chocolate",       "nombre": "Chocolate",           "subtitulo": "Intenso y clásico",            "categoria": "clasico",  "destacado": false, "imagen": "images/gelatos/chocolate.webp",       "imagenOriginal": "images/gelatos/original/chocolate.png" },
+    { "id": "avellana",        "nombre": "Avellana",            "subtitulo": "Tostada y cremosa",            "categoria": "clasico",  "destacado": false, "imagen": "images/gelatos/avellana.webp",        "imagenOriginal": "images/gelatos/original/avellana.png" },
+    { "id": "vainilla",        "nombre": "Vainilla",            "subtitulo": "Clásica y suave",              "categoria": "clasico",  "destacado": false, "imagen": "images/gelatos/vainilla.webp",        "imagenOriginal": "images/gelatos/original/vainilla.png" },
+    { "id": "stracciatella",   "nombre": "Stracciatella",       "subtitulo": "Crema y chispas de chocolate", "categoria": "clasico",  "destacado": false, "imagen": "images/gelatos/stracciatella.webp",   "imagenOriginal": "images/gelatos/original/stracciatella.png" },
+    { "id": "milo",            "nombre": "Milo",                "subtitulo": "El favorito de casa",          "categoria": "especial", "destacado": false, "imagen": "images/gelatos/milo.webp",            "imagenOriginal": "images/gelatos/original/milo.png" },
+    { "id": "arroz-con-leche", "nombre": "Arroz con Leche",     "subtitulo": "Sabor de la abuela",           "categoria": "especial", "destacado": false, "imagen": "images/gelatos/arroz-con-leche.webp", "imagenOriginal": "images/gelatos/original/arroz-con-leche.png" },
+    { "id": "coco-almendra",   "nombre": "Coco y Almendra",     "subtitulo": "Cremoso y crocante",           "categoria": "especial", "destacado": false, "imagen": "images/gelatos/coco-almendra.webp",   "imagenOriginal": "images/gelatos/original/coco-almendra.png" },
+    { "id": "corozo",          "nombre": "Corozo",              "subtitulo": "Fruto auténtico del Caribe",   "categoria": "frutal",   "destacado": false, "imagen": "images/gelatos/corozo.webp",          "imagenOriginal": "images/gelatos/original/corozo.png" },
+    { "id": "maracuya",        "nombre": "Maracuyá",            "subtitulo": "Cítrico y refrescante",        "categoria": "frutal",   "destacado": false, "imagen": "images/gelatos/maracuya.webp",        "imagenOriginal": "images/gelatos/original/maracuya.png" },
+    { "id": "maracuya-corozo", "nombre": "Maracuyá y Corozo",   "subtitulo": "Dúo caribeño",                 "categoria": "frutal",   "destacado": false, "imagen": "images/gelatos/maracuya-corozo.webp", "imagenOriginal": "images/gelatos/original/maracuya-corozo.png" },
+    { "id": "yogurt-amarenas", "nombre": "Yogurt con Amarenas", "subtitulo": "Con cerezas amarena",          "categoria": "frutal",   "destacado": false, "imagen": "images/gelatos/yogurt-amarenas.webp", "imagenOriginal": "images/gelatos/original/yogurt-amarenas.png" }
+  ],
+  "textos": {
+    "slogan": "Auténtico Gelato artesanal",
+    "sloganPalabraScript": "Gelato",
+    "seccionSabores": "Sabores de temporada",
+    "notaSabores": "Nuestros sabores cambian según la temporada, pero estos son algunos de nuestros favoritos.",
+    "seccionTamanos": "Nuestros tamaños",
+    "seccionDomicilio": "Pide a domicilio",
+    "textoDomicilio": "Arma tu pedido aquí y envíalo por WhatsApp, o encuéntranos en Rappi.",
+    "seccionVisitanos": "Visítanos",
+    "seccionSiguenos": "Síguenos",
+    "botonAgregar": "Agregar al carrito",
+    "botonPedir": "Pedir por WhatsApp",
+    "botonComoLlegar": "Cómo llegar",
+    "carritoVacio": "Tu carrito está vacío",
+    "domicilioNota": "Se coordina por WhatsApp",
+    "mensajeWhatsAppInicio": "¡Hola GIA! 🍦 Quiero hacer este pedido:",
+    "mensajeWhatsAppDosSabores": "Los tamaños de dos sabores sin combinación elegida: te confirmo el segundo sabor por aquí 🙂"
+  },
+  "assets": {
+    "logo": "logo/gia-logo.png",
+    "favicon": "logo/favicon.ico",
+    "ogImage": "logo/og-image-1200x630.jpg",
+    "ogImageAlternativa": "logo/og-image2-alternativa.jpg",
+    "patronZigzag": "images/marca/pattern-zigzag.jpg",
+    "patronZigzagOriginal": "images/marca/pattern-zigzag-original.jpg",
+    "conoGia": "images/marca/cono-gia.webp",
+    "posterUbicacion": "images/marca/ubicacion-poster.webp",
+    "posterUbicacionOriginal": "images/marca/ubicacion-poster.png"
+  }
+}
