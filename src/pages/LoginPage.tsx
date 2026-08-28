@@ -34,8 +34,8 @@ const LoginPage = () => {
       <div className="w-full max-w-sm relative z-10">
         <div className="rounded-3xl p-8 bg-white/90 backdrop-blur-xl border border-[#364266]/15 shadow-2xl text-center">
           <div className="mb-6">
-            <div className="w-44 h-20 mx-auto mb-2 flex items-center justify-center">
-              <img src="/logo/gia-logo-dark.png" alt="Gia Gelatería" className="max-h-full max-w-full object-contain" />
+            <div className="w-48 h-24 mx-auto mb-2 flex items-center justify-center">
+              <img src="/logo/gia-logo-login.png" alt="Gia Gelatería" className="max-h-full max-w-full object-contain" />
             </div>
             <h1 className="font-sans font-bold text-2xl text-[#364266]">GIA GELATERÍA</h1>
             <p className="text-xs mt-1 text-[#897863] font-sans">
