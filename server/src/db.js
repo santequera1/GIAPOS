@@ -205,8 +205,8 @@ function migrateSchema() {
     db.prepare("DELETE FROM products WHERE name LIKE '%Arroz con Leche%'").run();
 
     const gelatoSizesStd = JSON.stringify([
-      { name: 'Pequeño (1 sabor)', price: 15000 },
-      { name: 'Grande (2 sabores)', price: 21000 },
+      { name: 'Pequeño (1 sabor)', price: 16000 },
+      { name: 'Grande (2 sabores)', price: 22000 },
       { name: 'Litro (2 sabores)', price: 70000 },
     ]);
 
@@ -216,18 +216,21 @@ function migrateSchema() {
       { name: 'Litro (2 sabores)', price: 75000 },
     ]);
 
+    // Update standard gelato prices to event pricing ($16.000 / $22.000)
+    db.prepare("UPDATE products SET price = 16000, sizes = ? WHERE category_id IN (1, 2, 3) AND name NOT LIKE '%Sin Azúcar%'").run(gelatoSizesStd);
+
     // 2. Ensure Queso y Bocadillo
     const quesoBocadillo = db.prepare("SELECT id FROM products WHERE name LIKE '%Queso%Bocadillo%' OR name LIKE '%Bocadillo%Queso%'").get();
     if (!quesoBocadillo) {
       db.prepare(`
         INSERT INTO products (name, category_id, price, available, image, description, sizes, color_bg, color_accent, featured)
-        VALUES ('Queso y Bocadillo', 1, 15000, 1, '/images/gelatos/yogurt-amarenas.webp', 'Queso campesino con dulce de guayaba y bocadillo veleño', ?, '#F8EDEB', '#B03A5B', 1)
+        VALUES ('Queso y Bocadillo', 1, 16000, 1, '/images/gelatos/yogurt-amarenas.webp', 'Queso campesino con dulce de guayaba y bocadillo veleño', ?, '#F8EDEB', '#B03A5B', 1)
       `).run(gelatoSizesStd);
     } else {
-      db.prepare("UPDATE products SET name = 'Queso y Bocadillo', price = 15000, sizes = ?, available = 1 WHERE id = ?").run(gelatoSizesStd, quesoBocadillo.id);
+      db.prepare("UPDATE products SET name = 'Queso y Bocadillo', price = 16000, sizes = ?, available = 1 WHERE id = ?").run(gelatoSizesStd, quesoBocadillo.id);
     }
 
-    // 3. Ensure Pistacho Sin Azúcar (SA)
+    // 3. Ensure Pistacho Sin Azúcar (SA) - $17.000 / $23.000 / $75.000
     const pistachoSA = db.prepare("SELECT id FROM products WHERE name LIKE '%Pistacho%Sin Az%' OR name LIKE '%SA Pistacho%' OR name LIKE '%Pistacho SA%'").get();
     if (!pistachoSA) {
       db.prepare(`

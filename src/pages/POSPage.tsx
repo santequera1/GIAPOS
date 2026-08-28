@@ -40,14 +40,14 @@ export interface GelatoFormat {
 }
 
 const GELATO_FORMATS: GelatoFormat[] = [
-  { id: 'vaso_pequeno', name: 'Vaso Pequeño', container: 'Vaso', capacity: '4 oz', scoops: 1, price: 15000, desc: '1 sabor (4 oz)', emoji: '🍨' },
-  { id: 'vaso_grande',  name: 'Vaso Grande',  container: 'Vaso', capacity: '6 oz', scoops: 2, price: 21000, desc: '2 sabores (6 oz)', emoji: '🍨' },
-  { id: 'cono_pequeno', name: 'Cono Pequeño', container: 'Cono', capacity: 'Cono', scoops: 1, price: 15000, desc: '1 sabor en cono', emoji: '🍦' },
-  { id: 'cono_grande',  name: 'Cono Grande',  container: 'Cono', capacity: 'Cono', scoops: 2, price: 21000, desc: '2 sabores en cono', emoji: '🍦' },
+  { id: 'vaso_pequeno', name: 'Vaso Pequeño', container: 'Vaso', capacity: '4 oz', scoops: 1, price: 16000, desc: '1 sabor (4 oz)', emoji: '🍨' },
+  { id: 'vaso_grande',  name: 'Vaso Grande',  container: 'Vaso', capacity: '6 oz', scoops: 2, price: 22000, desc: '2 sabores (6 oz)', emoji: '🍨' },
+  { id: 'cono_pequeno', name: 'Cono Pequeño', container: 'Cono', capacity: 'Cono', scoops: 1, price: 16000, desc: '1 sabor en cono', emoji: '🍦' },
+  { id: 'cono_grande',  name: 'Cono Grande',  container: 'Cono', capacity: 'Cono', scoops: 2, price: 22000, desc: '2 sabores en cono', emoji: '🍦' },
   { id: 'litro',        name: 'Litro',        container: 'Familiar', capacity: '1000 ml', scoops: 2, price: 70000, desc: '2 sabores (familiar)', emoji: '🧊' },
 ];
 
-const QUICK_CASH_AMOUNTS = [15000, 20000, 50000, 100000];
+const QUICK_CASH_AMOUNTS = [16000, 20000, 22000, 50000, 100000];
 
 interface TabOrder {
   id: string;
