@@ -17,7 +17,7 @@ const LoginPage = () => {
     setError('');
     setLoading(true);
     try {
-      await loginWithCredentials(username.toLowerCase(), password);
+      await loginWithCredentials(username.trim().toLowerCase(), password.trim());
       navigate('/pos');
     } catch (err: any) {
       setError(err.message || 'Usuario o contraseña incorrectos');
@@ -50,7 +50,7 @@ const LoginPage = () => {
                 <User size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#897863]" />
                 <input
                   value={username} onChange={e => setUsername(e.target.value)}
-                  placeholder="admin o cajero"
+                  placeholder="Ingrese su usuario"
                   className="w-full pl-10 pr-4 py-3 rounded-xl text-sm bg-[#FAF8EA] border border-[#364266]/20 text-[#364266] focus:border-[#364266] focus:outline-none focus:ring-1 focus:ring-[#364266]"
                 />
               </div>
@@ -85,11 +85,6 @@ const LoginPage = () => {
               ) : 'INGRESAR AL SISTEMA'}
             </button>
           </form>
-
-          <div className="mt-6 pt-4 border-t border-gray-100 text-[11px] text-[#897863] space-y-0.5">
-            <p><strong>Admin:</strong> admin / admin123</p>
-            <p><strong>Cajero:</strong> cajero / cajero123</p>
-          </div>
         </div>
 
         <p className="text-center text-[11px] mt-4 text-[#897863]">

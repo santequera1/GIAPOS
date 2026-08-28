@@ -6,13 +6,16 @@ const { generateToken } = require('../auth');
 const router = Router();
 
 router.post('/login', (req, res) => {
-  const { username, password } = req.body;
+  let { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'Usuario y contraseña requeridos' });
   }
 
+  username = String(username).trim();
+  password = String(password).trim();
+
   const db = getDb();
-  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+  const user = db.prepare('SELECT * FROM users WHERE LOWER(TRIM(username)) = LOWER(?)').get(username);
   if (!user || !bcrypt.compareSync(password, user.password)) {
     return res.status(401).json({ error: 'Credenciales inválidas' });
   }
