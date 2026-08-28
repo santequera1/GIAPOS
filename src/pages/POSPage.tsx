@@ -349,7 +349,7 @@ export const POSPage: React.FC = () => {
   }, [cart, numericCash, total, paymentMethod, lastOrder, firstFlavor, showCustomerModal]);
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-3.5rem)] lg:h-screen w-full bg-[#FEF3DE] text-[#364266] overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-full w-full bg-[#FEF3DE] text-[#364266] overflow-hidden">
       {/* Mobile Top View Switcher */}
       <div className="lg:hidden flex bg-[#242D49] p-1.5 gap-1.5 shrink-0 shadow-md">
         <button
@@ -757,15 +757,15 @@ export const POSPage: React.FC = () => {
         </div>
 
         {/* Cart Items List */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="flex-1 overflow-y-auto min-h-0 p-2.5 lg:p-3 space-y-2">
           {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center text-[#897863]/70 p-6">
-              <div className="w-16 h-16 rounded-full bg-[#FAF8EA] flex items-center justify-center text-2xl mb-3">
+            <div className="h-full flex flex-col items-center justify-center text-center text-[#897863]/70 p-4">
+              <div className="w-14 h-14 rounded-full bg-[#FAF8EA] flex items-center justify-center text-2xl mb-2">
                 🍦
               </div>
               <p className="font-sans font-bold text-sm text-[#364266]">Carrito Vacío</p>
               <p className="text-xs text-[#897863] max-w-xs mt-1 font-sans">
-                Toca los sabores o productos en el panel izquierdo para agregarlos en segundos.
+                Toca los sabores o productos en el catálogo para agregarlos.
               </p>
             </div>
           ) : (
@@ -808,7 +808,7 @@ export const POSPage: React.FC = () => {
                 </div>
 
                 {/* Subtotal */}
-                <div className="text-right shrink-0 min-w-[70px]">
+                <div className="text-right shrink-0 min-w-[65px]">
                   <p className="font-sans font-bold text-xs text-[#364266]">
                     {formatPrice(item.price * item.quantity)}
                   </p>
@@ -827,74 +827,74 @@ export const POSPage: React.FC = () => {
         </div>
 
         {/* Cart Totals & Fast Checkout Controls */}
-        <div className="p-3.5 bg-[#FAF8EA] border-t border-[#364266]/15 shrink-0 space-y-3">
+        <div className="p-2.5 sm:p-3.5 bg-[#FAF8EA] border-t border-[#364266]/15 shrink-0 space-y-2 sm:space-y-2.5">
           {/* Payment Method Selector */}
           <div>
-            <label className="text-[11px] font-bold text-[#897863] uppercase tracking-wider block mb-1.5">
+            <label className="text-[10px] sm:text-[11px] font-bold text-[#897863] uppercase tracking-wider block mb-1">
               Método de Pago
             </label>
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-4 gap-1 sm:gap-1.5">
               <button
                 onClick={() => setPaymentMethod('cash')}
                 className={cn(
-                  'py-2 px-1 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
+                  'py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
                   paymentMethod === 'cash'
                     ? 'bg-[#364266] text-[#FEF3DE] shadow-md'
                     : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
                 )}
               >
-                <Banknote size={15} />
+                <Banknote size={14} />
                 <span>Efectivo</span>
               </button>
 
               <button
                 onClick={() => setPaymentMethod('card_debit')}
                 className={cn(
-                  'py-2 px-1 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
+                  'py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
                   paymentMethod === 'card_debit'
                     ? 'bg-[#364266] text-[#FEF3DE] shadow-md'
                     : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
                 )}
               >
-                <CreditCard size={15} />
+                <CreditCard size={14} />
                 <span>T. Débito</span>
               </button>
 
               <button
                 onClick={() => setPaymentMethod('card_credit')}
                 className={cn(
-                  'py-2 px-1 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
+                  'py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
                   paymentMethod === 'card_credit'
                     ? 'bg-[#364266] text-[#FEF3DE] shadow-md'
                     : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
                 )}
               >
-                <CreditCard size={15} />
+                <CreditCard size={14} />
                 <span>T. Crédito</span>
               </button>
 
               <button
                 onClick={() => setPaymentMethod('transfer')}
                 className={cn(
-                  'py-2 px-1 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
+                  'py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
                   paymentMethod === 'transfer'
                     ? 'bg-[#364266] text-[#FEF3DE] shadow-md'
                     : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
                 )}
               >
-                <QrCode size={15} />
-                <span>QR / Transferencia</span>
+                <QrCode size={14} />
+                <span>QR / Transf.</span>
               </button>
             </div>
           </div>
 
           {/* Cash Tender Buttons & Calculator */}
           {paymentMethod === 'cash' && (
-            <div className="space-y-2 pt-1">
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <div className="space-y-1.5 pt-0.5">
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
                 <button
                   onClick={() => setCashReceived(String(total))}
-                  className="px-2.5 py-1 rounded-lg bg-white border border-[#364266]/20 hover:bg-[#FAF8EA] text-[11px] font-bold text-[#364266] whitespace-nowrap shadow-sm"
+                  className="px-2 py-0.5 rounded-lg bg-white border border-[#364266]/20 hover:bg-[#FAF8EA] text-[10px] sm:text-[11px] font-bold text-[#364266] whitespace-nowrap shadow-sm"
                 >
                   Exacto (${formatPrice(total)})
                 </button>
@@ -902,28 +902,28 @@ export const POSPage: React.FC = () => {
                   <button
                     key={amt}
                     onClick={() => setCashReceived(String(amt))}
-                    className="px-2.5 py-1 rounded-lg bg-white border border-[#364266]/20 hover:bg-[#FAF8EA] text-[11px] font-bold text-[#364266] whitespace-nowrap shadow-sm"
+                    className="px-2 py-0.5 rounded-lg bg-white border border-[#364266]/20 hover:bg-[#FAF8EA] text-[10px] sm:text-[11px] font-bold text-[#364266] whitespace-nowrap shadow-sm"
                   >
                     ${formatPrice(amt)}
                   </button>
                 ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 <div>
-                  <label className="text-[10px] font-bold text-[#897863]">Efectivo Recibido</label>
+                  <label className="text-[9px] sm:text-[10px] font-bold text-[#897863]">Efectivo Recibido</label>
                   <input
                     type="number"
                     value={cashReceived}
                     onChange={(e) => setCashReceived(e.target.value)}
                     placeholder={String(total)}
-                    className="w-full p-2 text-sm font-bold bg-white rounded-xl border border-[#364266]/20 focus:ring-2 focus:ring-[#364266]"
+                    className="w-full p-1.5 text-xs sm:text-sm font-bold bg-white rounded-xl border border-[#364266]/20 focus:ring-2 focus:ring-[#364266]"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-[#897863]">Cambio / Vueltos</label>
+                  <label className="text-[9px] sm:text-[10px] font-bold text-[#897863]">Cambio / Vueltos</label>
                   <div className={cn(
-                    'p-2 text-sm font-bold rounded-xl border text-right truncate',
+                    'p-1.5 text-xs sm:text-sm font-bold rounded-xl border text-right truncate',
                     change >= 0
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
                       : 'bg-red-50 text-red-600 border-red-200'
@@ -936,22 +936,22 @@ export const POSPage: React.FC = () => {
           )}
 
           {/* Totals Summary */}
-          <div className="pt-2 border-t border-[#364266]/10 space-y-1 text-xs">
-            <div className="flex justify-between text-[#897863]">
+          <div className="pt-1 border-t border-[#364266]/10 space-y-0.5 text-xs">
+            <div className="flex justify-between text-[#897863] text-[11px]">
               <span>Subtotal:</span>
               <span className="font-semibold">{formatPrice(subtotal)}</span>
             </div>
 
             {discountPercent > 0 && (
-              <div className="flex justify-between text-emerald-700 font-semibold">
+              <div className="flex justify-between text-emerald-700 font-semibold text-[11px]">
                 <span>Descuento ({discountPercent}%):</span>
                 <span>-{formatPrice(discountAmount)}</span>
               </div>
             )}
 
-            <div className="flex items-baseline justify-between pt-1 text-base lg:text-lg font-sans font-bold text-[#364266]">
+            <div className="flex items-baseline justify-between pt-0.5 text-sm sm:text-base font-sans font-bold text-[#364266]">
               <span>Total a Cobrar:</span>
-              <span className="text-xl lg:text-2xl font-sans font-extrabold text-[#242D49]">{formatPrice(total)}</span>
+              <span className="text-base sm:text-xl font-sans font-extrabold text-[#242D49]">{formatPrice(total)}</span>
             </div>
           </div>
 
@@ -960,7 +960,7 @@ export const POSPage: React.FC = () => {
             onClick={handleCheckout}
             disabled={cart.length === 0 || isSubmitting || (paymentMethod === 'cash' && numericCash > 0 && numericCash < total)}
             className={cn(
-              'w-full py-3.5 px-4 rounded-2xl font-sans font-bold text-base text-[#FEF3DE] flex items-center justify-center gap-2 shadow-lg transition-all',
+              'w-full py-2.5 sm:py-3.5 px-4 rounded-xl font-sans font-bold text-sm sm:text-base text-[#FEF3DE] flex items-center justify-center gap-2 shadow-lg transition-all',
               cart.length > 0 && !isSubmitting
                 ? 'bg-gradient-to-r from-[#364266] to-[#242D49] hover:shadow-xl hover:scale-[1.01] active:scale-[0.99]'
                 : 'bg-gray-400 cursor-not-allowed'
@@ -970,9 +970,9 @@ export const POSPage: React.FC = () => {
               <span>Procesando...</span>
             ) : (
               <>
-                <Sparkles size={18} />
+                <Sparkles size={16} />
                 <span>COBRAR {formatPrice(total)}</span>
-                <span className="text-xs font-mono opacity-70 ml-1">(Enter)</span>
+                <span className="text-xs font-mono opacity-70 ml-1 hidden sm:inline">(Enter)</span>
               </>
             )}
           </button>

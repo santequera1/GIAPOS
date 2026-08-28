@@ -234,8 +234,8 @@ export const AppLayout = () => {
       )}
 
       {/* Main content */}
-      <main className={cn(isPOS ? 'pt-0 pb-16 lg:pb-0' : 'pt-14 pb-20 md:pb-4', 'md:ml-16 min-h-screen transition-all duration-300', mainML)}>
-        <div className="p-0 max-w-full">
+      <main className={cn(isPOS ? 'pt-0 pb-16 md:pb-0 h-[100dvh] overflow-hidden' : 'pt-14 pb-20 md:pb-4 min-h-screen', 'md:ml-16 transition-all duration-300', mainML)}>
+        <div className="p-0 max-w-full h-full">
           <Outlet />
         </div>
       </main>
