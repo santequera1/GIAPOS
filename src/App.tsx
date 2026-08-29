@@ -26,7 +26,7 @@ import { io } from "socket.io-client";
 
 const queryClient = new QueryClient();
 
-const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
+const SOCKET_URL = typeof window !== 'undefined' ? window.location.origin : (import.meta.env.VITE_API_URL?.replace('/api', '') || '');
 
 const ProtectedRoutes = () => {
   const user = useStore(s => s.user);

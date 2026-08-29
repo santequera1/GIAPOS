@@ -16,12 +16,13 @@ export function printThermal(htmlContent: string, title = 'Impresión POS'): Pro
       const iframe = document.createElement('iframe');
       iframe.id = 'pos-print-iframe';
       iframe.style.position = 'fixed';
-      iframe.style.left = '-9999px';
-      iframe.style.top = '0px';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
       iframe.style.width = '320px';
-      iframe.style.height = '800px';
-      iframe.style.border = 'none';
-      iframe.style.visibility = 'hidden';
+      iframe.style.height = '600px';
+      iframe.style.border = '0';
+      iframe.style.opacity = '0.001';
+      iframe.style.pointerEvents = 'none';
       iframe.style.zIndex = '-9999';
       document.body.appendChild(iframe);
 
@@ -53,7 +54,7 @@ export function printThermal(htmlContent: string, title = 'Impresión POS'): Pro
         }
       };
 
-      setTimeout(doPrint, 250);
+      setTimeout(doPrint, 200);
     } catch (err) {
       console.warn('Primary print failed, popup fallback', err);
       fallbackPopupPrint(htmlContent, title);
