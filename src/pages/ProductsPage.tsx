@@ -16,7 +16,7 @@ const ProductsPage = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [formData, setFormData] = useState({ name: '', description: '', price: '', categoryId: 1, available: true, sizes: [] as { name: string; price: number }[] });
+  const [formData, setFormData] = useState({ name: '', description: '', price: '', categoryId: 1, image: '', available: true, sizes: [] as { name: string; price: number }[] });
 
   const filtered = products.filter(p => {
     if (selectedCategory && p.categoryId !== selectedCategory) return false;
@@ -26,13 +26,13 @@ const ProductsPage = () => {
 
   const openEdit = (id: number) => {
     const p = products.find(pr => pr.id === id)!;
-    setFormData({ name: p.name, description: p.description || '', price: String(p.price), categoryId: p.categoryId, available: p.available, sizes: p.sizes ? [...p.sizes] : [] });
+    setFormData({ name: p.name, description: p.description || '', price: String(p.price), categoryId: p.categoryId, image: p.image || '', available: p.available, sizes: p.sizes ? [...p.sizes] : [] });
     setEditingId(id);
     setShowForm(true);
   };
 
   const handleSave = () => {
-    const data: any = { name: formData.name, description: formData.description, price: Number(formData.price), categoryId: formData.categoryId, available: formData.available };
+    const data: any = { name: formData.name, description: formData.description, price: Number(formData.price), categoryId: formData.categoryId, image: formData.image, available: formData.available };
     data.sizes = formData.sizes.length > 0 ? formData.sizes : null;
     if (editingId) {
       updateProduct(editingId, data);
@@ -41,7 +41,7 @@ const ProductsPage = () => {
     }
     setShowForm(false);
     setEditingId(null);
-    setFormData({ name: '', description: '', price: '', categoryId: 1, available: true, sizes: [] });
+    setFormData({ name: '', description: '', price: '', categoryId: 1, image: '', available: true, sizes: [] });
   };
 
   const addSize = () => {
@@ -280,6 +280,41 @@ const ProductsPage = () => {
                     className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-[#364266] bg-white">
                     {categories.map(c => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
                   </select>
+                </div>
+                <div>
+                  <label className="font-bold text-[#364266] mb-1 block">Imagen (URL o Ruta)</label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      value={formData.image}
+                      onChange={e => setFormData({ ...formData, image: e.target.value })}
+                      placeholder="/images/products/cup-4oz.webp o URL"
+                      className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-xs outline-none focus:ring-2 focus:ring-[#364266]"
+                    />
+                    {formData.image && (
+                      <div className="w-9 h-9 rounded-lg border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center bg-gray-50">
+                        <img src={formData.image} alt="Preview" className="max-h-full max-w-full object-contain" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                    {[
+                      { label: '🍨 Vaso 4oz', path: '/images/products/cup-4oz.webp' },
+                      { label: '🍨 Vaso 6oz', path: '/images/products/cup-6oz.webp' },
+                      { label: '🍦 Cono 1 Sabor', path: '/images/products/cone-small.webp' },
+                      { label: '🍦 Cono 2 Sabores', path: '/images/products/cone-large.webp' },
+                      { label: '☕ Affogato', path: '/images/products/affogato.webp' },
+                      { label: '🍨 Litro', path: '/images/products/tub-1l.webp' },
+                    ].map(p => (
+                      <button
+                        key={p.path}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, image: p.path })}
+                        className="px-2 py-0.5 rounded-md bg-gray-100 hover:bg-gray-200 text-[10px] text-gray-700 font-medium"
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <button onClick={handleSave} disabled={!formData.name || (!formData.price && formData.sizes.length === 0)}
                   className="w-full mt-2 py-3 rounded-xl bg-[#364266] text-[#FEF3DE] hover:bg-[#242D49] font-bold text-sm disabled:opacity-40 shadow-md">

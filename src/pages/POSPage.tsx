@@ -793,7 +793,7 @@ export const POSPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 lg:gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-2 lg:gap-2.5">
                 {gelatoFlavors.map(flavor => {
                   const isFirstSelected = firstFlavor?.id === flavor.id;
                   const bgColor = flavor.color_bg || '#FAF8EA';
@@ -890,7 +890,7 @@ export const POSPage: React.FC = () => {
           {/* Other Categories Grid (Affogatos, Bebidas & Aguas, Adicionales) */}
           {typeof catalogTab === 'number' && (
             <div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-2.5">
                 {otherProducts.map(prod => (
                   <div
                     key={prod.id}
