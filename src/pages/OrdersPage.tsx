@@ -241,7 +241,7 @@ export const OrdersPage: React.FC = () => {
                     <button
                       onClick={() => {
                         setSelectedInvoice(order);
-                        setTimeout(() => window.print(), 200);
+                        
                       }}
                       className="p-2 rounded-xl bg-[#364266] text-[#FEF3DE] hover:bg-[#242D49] transition-colors shadow-sm"
                       title="Imprimir"
@@ -315,7 +315,7 @@ export const OrdersPage: React.FC = () => {
                         <button
                           onClick={() => {
                             setSelectedInvoice(order);
-                            setTimeout(() => window.print(), 200);
+                            
                           }}
                           className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600"
                           title="Imprimir"

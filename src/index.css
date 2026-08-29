@@ -182,10 +182,28 @@
 /* Thermal Printing Support */
 @media print {
   @page {
-    margin: 0mm;
+    margin: 0mm !important;
+    size: auto !important;
+  }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
   .no-print,
-  .print\:hidden {
+  .print\:hidden,
+  header,
+  aside,
+  nav,
+  button,
+  .toaster,
+  [data-sonner-toaster],
+  .fixed.inset-0.z-50.bg-black\/60,
+  .fixed.inset-0.z-50.bg-black\/70 {
     display: none !important;
   }
 }

@@ -302,6 +302,8 @@ function migrateSchema() {
       `).run();
     } else {
       db.prepare("UPDATE products SET price = 6000, image = '/images/products/agua-hatsu.webp' WHERE id = ?").run(aguaHatsu.id);
+    }
+
     const toteBag = db.prepare("SELECT id FROM products WHERE name LIKE '%Tote Bag%'").get();
     if (!toteBag) {
       db.prepare(`

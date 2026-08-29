@@ -24,6 +24,7 @@ import {
 import { useStore, type CashShift } from '@/store/useStore';
 import { api } from '@/lib/api';
 import { formatPrice, formatFullDate, formatTime } from '@/lib/format';
+import { printThermal, generateZReportHtml } from '@/lib/thermalPrint';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -74,154 +75,15 @@ export const CashShiftPage: React.FC = () => {
   const countedCash = Number(actualCashInput) || 0;
   const difference = countedCash - expectedCash;
 
-  const handlePrintZReport = (shiftData: any) => {
+  const handlePrintZReport = async (shiftData: any, isReportX = false) => {
     if (!shiftData) return;
-
-    const printFrame = document.createElement('iframe');
-    printFrame.style.position = 'fixed';
-    printFrame.style.right = '0';
-    printFrame.style.bottom = '0';
-    printFrame.style.width = '0';
-    printFrame.style.height = '0';
-    printFrame.style.border = '0';
-    document.body.appendChild(printFrame);
-
-    const frameDoc = printFrame.contentWindow?.document;
-    if (!frameDoc) return;
-
-    const shiftId = shiftData.id || 1;
-    const cashier = shiftData.cashierName || shiftData.cashier_name || 'Cajero Gia';
-    const initial = shiftData.initialCash !== undefined ? shiftData.initialCash : shiftData.initial_cash || 0;
-    const cash = shiftData.cashSales !== undefined ? shiftData.cashSales : shiftData.cash_sales || 0;
-    const withdrawals = shiftData.totalWithdrawals !== undefined ? shiftData.totalWithdrawals : shiftData.total_withdrawals || 0;
-    const debit = shiftData.debitSales !== undefined ? shiftData.debitSales : shiftData.debit_sales || 0;
-    const credit = shiftData.creditSales !== undefined ? shiftData.creditSales : shiftData.credit_sales || 0;
-    const transfer = shiftData.transferSales !== undefined ? shiftData.transferSales : shiftData.transfer_sales || 0;
-    const totalSales = shiftData.totalSales !== undefined ? shiftData.totalSales : shiftData.total_sales || 0;
-    const totalOrders = shiftData.totalOrders !== undefined ? shiftData.totalOrders : shiftData.total_orders || 0;
-    const expected = shiftData.expectedCash !== undefined ? shiftData.expectedCash : (initial + cash - withdrawals);
-    const actual = shiftData.actualCash !== undefined ? shiftData.actualCash : shiftData.actual_cash || 0;
-    const diff = shiftData.difference !== undefined ? shiftData.difference : (actual - expected);
-    const dateStr = formatFullDate(shiftData.closedAt || shiftData.closed_at || new Date().toISOString());
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>Reporte Z - Turno #${shiftId}</title>
-          <style>
-            @page {
-              margin: 0;
-              size: auto;
-            }
-            @media print {
-              html, body {
-                width: 70mm;
-                margin: 0 auto;
-                padding: 1.5mm 0mm;
-                height: auto !important;
-                min-height: 0 !important;
-                overflow: visible !important;
-              }
-            }
-            * {
-              box-sizing: border-box;
-              margin: 0;
-              padding: 0;
-            }
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, monospace, sans-serif;
-              font-size: 10px;
-              color: #000;
-              background: #fff;
-              width: 70mm;
-              margin: 0 auto;
-              padding: 1.5mm 0mm;
-              line-height: 1.2;
-            }
-            .text-center { text-align: center; }
-            .text-right { text-align: right; }
-            .font-bold { font-weight: bold; }
-            .logo-box {
-              width: 36px;
-              height: 36px;
-              background-color: #242D49;
-              border-radius: 6px;
-              margin: 0 auto 3px auto;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              padding: 3px;
-            }
-            .logo-box img {
-              max-width: 100%;
-              max-height: 100%;
-              object-fit: contain;
-            }
-            .divider { border-top: 1px solid #000; margin: 3px 0; }
-            .dashed { border-top: 1px dashed #333; margin: 3px 0; }
-            .row { display: flex; justify-content: space-between; margin: 1px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="text-center">
-            <div class="logo-box">
-              <img src="${window.location.origin}/logo/gia-logo-light.png" alt="GIA" />
-            </div>
-            <p class="font-bold" style="font-size: 11px;">GIACARTAGENA SAS</p>
-            <p style="font-size: 8.5px;">NIT: 901961461-3 • CALLE BALOCO</p>
-            <p style="font-size: 8.5px;">CIERRE DE CAJA (REPORTE Z)</p>
-          </div>
-
-          <div class="divider"></div>
-
-          <div style="font-size: 9px;">
-            <div class="row"><span><strong>Turno:</strong> #${shiftId}</span><span>${dateStr}</span></div>
-            <div class="row"><span><strong>Cajero:</strong> ${cashier}</span><span><strong>Pedidos:</strong> ${totalOrders}</span></div>
-          </div>
-
-          <div class="dashed"></div>
-
-          <div style="font-size: 9.5px;">
-            <div class="row"><span>Base Inicial:</span><span>${formatPrice(initial)}</span></div>
-            <div class="row"><span>Ventas Efectivo:</span><span>+${formatPrice(cash)}</span></div>
-            ${withdrawals > 0 ? `<div class="row" style="color: #000; font-weight: bold;"><span>Retiros / Gastos:</span><span>-${formatPrice(withdrawals)}</span></div>` : ''}
-            <div class="row"><span>Ventas T. Débito:</span><span>${formatPrice(debit)}</span></div>
-            <div class="row"><span>Ventas T. Crédito:</span><span>${formatPrice(credit)}</span></div>
-            <div class="row"><span>Ventas QR / Nequi:</span><span>${formatPrice(transfer)}</span></div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div style="font-size: 10px;">
-            <div class="row font-bold" style="font-size: 11px;"><span>TOTAL VENTAS:</span><span>${formatPrice(totalSales)}</span></div>
-            <div class="row" style="font-size: 9px; margin-top: 2px;"><span>Efectivo Esperado:</span><span>${formatPrice(expected)}</span></div>
-            <div class="row" style="font-size: 9px;"><span>Efectivo Físico Contado:</span><span>${formatPrice(actual)}</span></div>
-            <div class="row font-bold" style="font-size: 9.5px;"><span>Diferencia:</span><span>${diff === 0 ? 'Exacto ($0)' : diff > 0 ? '+' + formatPrice(diff) : formatPrice(diff)}</span></div>
-          </div>
-
-          <div class="dashed" style="margin-top: 4px;"></div>
-          <div class="text-center" style="font-size: 8px; margin-top: 2px;">
-            <p>Gia Gelatería POS • Arqueo Conforme</p>
-          </div>
-        </body>
-      </html>
-    `;
-
-    frameDoc.open();
-    frameDoc.write(htmlContent);
-    frameDoc.close();
-
-    setTimeout(() => {
-      printFrame.contentWindow?.focus();
-      printFrame.contentWindow?.print();
-      setTimeout(() => {
-        if (document.body.contains(printFrame)) {
-          document.body.removeChild(printFrame);
-        }
-      }, 2000);
-    }, 250);
+    try {
+      const html = generateZReportHtml(shiftData, { paperSize: "80mm", isReportX });
+      await printThermal(html, `Reporte-${isReportX ? "X" : "Z"}-Turno-${shiftData.id || 1}`);
+    } catch (err) {
+      console.error("Error printing report:", err);
+      toast.error("Error al imprimir el reporte térmico");
+    }
   };
 
   const handleCloseShift = async () => {
@@ -327,7 +189,7 @@ export const CashShiftPage: React.FC = () => {
           {currentShift?.status === 'open' && (
             <>
               <button
-                onClick={() => handlePrintZReport(currentShift)}
+                onClick={() => handlePrintZReport(currentShift, true)}
                 className="px-3.5 py-2 rounded-xl bg-gray-100 text-[#364266] hover:bg-gray-200 border border-gray-300 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
                 title="Imprimir reporte parcial de turno (Reporte X)"
               >

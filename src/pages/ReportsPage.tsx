@@ -468,7 +468,7 @@ export const ReportsPage: React.FC = () => {
                             <button
                               onClick={() => {
                                 setSelectedInvoice(order);
-                                setTimeout(() => window.print(), 200);
+                                
                               }}
                               className="p-1.5 rounded-lg hover:bg-[#FAF8EA] text-[#364266] transition-colors"
                               title="Imprimir"

@@ -21,6 +21,7 @@ import {
   Percent,
   Tag,
   Pencil,
+  RotateCcw,
 } from 'lucide-react';
 import { useStore, type OrderItem, type PaymentMethod, type Product, type PaymentSplit } from '@/store/useStore';
 import { formatPrice } from '@/lib/format';
@@ -87,6 +88,7 @@ export const POSPage: React.FC = () => {
     addOrder,
     currentShift,
     toggleProductAvailability,
+    initialize,
   } = useStore();
 
   // Tabs / Precuentas State
@@ -117,6 +119,47 @@ export const POSPage: React.FC = () => {
   const [showDiscountInput, setShowDiscountInput] = useState(false);
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editingTabName, setEditingTabName] = useState<string>('');
+  const [isRefreshingCatalog, setIsRefreshingCatalog] = useState(false);
+  const [renameModalTab, setRenameModalTab] = useState<TabOrder | null>(null);
+  const [customRenameValue, setCustomRenameValue] = useState("");
+
+  const PRESET_TAB_NAMES = [
+    "Mesa 1", "Mesa 2", "Mesa 3", "Mesa 4", "Mesa 5",
+    "Para Llevar", "Barra", "Rappi", "Convención"
+  ];
+
+  // Auto-fetch if catalog is empty
+  useEffect(() => {
+    if (products.length === 0 || categories.length === 0) {
+      initialize();
+    }
+  }, [products.length, categories.length, initialize]);
+
+  const handleRefreshCatalog = async () => {
+    setIsRefreshingCatalog(true);
+    try {
+      await initialize();
+      toast.success("Catálogo de sabores y productos actualizado");
+    } catch (e) {
+      toast.error("Error al actualizar catálogo");
+    } finally {
+      setIsRefreshingCatalog(false);
+    }
+  };
+
+  const openRenameModal = (tab: TabOrder) => {
+    setRenameModalTab(tab);
+    setCustomRenameValue(tab.name);
+  };
+
+  const handleApplyTabName = (newName: string) => {
+    if (!renameModalTab) return;
+    const finalName = newName.trim() || renameModalTab.name;
+    setTabs(prev => prev.map(t => t.id === renameModalTab.id ? { ...t, name: finalName } : t));
+    setRenameModalTab(null);
+    toast.success(`Cuenta nombrada: ${finalName}`);
+  };
+
 
   // Active Tab Data
   const currentTab = useMemo(() => {
@@ -721,9 +764,20 @@ export const POSPage: React.FC = () => {
           {catalogTab === 'gelato' && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold tracking-wider uppercase text-[#897863]">
-                  Sabores Gia Gelatería
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold tracking-wider uppercase text-[#897863]">
+                    Sabores Gia Gelatería ({gelatoFlavors.length} disponibles)
+                  </span>
+                  <button
+                    onClick={handleRefreshCatalog}
+                    disabled={isRefreshingCatalog}
+                    className="p-1 px-2 text-[11px] rounded-lg bg-white border border-[#364266]/15 hover:bg-[#FAF8EA] text-[#364266] font-semibold flex items-center gap-1 shadow-sm transition-all"
+                    title="Recargar catálogo de sabores"
+                  >
+                    <RotateCcw size={12} className={cn(isRefreshingCatalog && "animate-spin")} />
+                    <span>Actualizar</span>
+                  </button>
+                </div>
                 <div className="relative w-48 lg:w-64">
                   <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#897863]" />
                   <input
@@ -960,7 +1014,7 @@ export const POSPage: React.FC = () => {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          startEditingTab(tab);
+                          openRenameModal(tab);
                         }}
                         className="opacity-60 hover:opacity-100 p-0.5"
                         title="Renombrar cuenta (Ej. Mesa 4, Carlos...)"
@@ -1029,15 +1083,16 @@ export const POSPage: React.FC = () => {
                 className="px-2 py-0.5 text-sm font-bold text-[#242D49] bg-white rounded-lg border border-[#C6BF81] outline-none"
               />
             ) : (
-              <div
-                className="flex items-center gap-1.5 cursor-pointer group"
-                onClick={() => startEditingTab(currentTab)}
-                title="Clic para renombrar cuenta / cliente"
-              >
-                <h2 className="font-sans font-bold text-sm text-[#364266] group-hover:underline">
-                  {currentTab.name} ({cart.reduce((a, b) => a + b.quantity, 0)})
-                </h2>
-                <Pencil size={12} className="text-[#897863] opacity-60 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => openRenameModal(currentTab)}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white hover:bg-gray-100 border border-[#364266]/20 text-[#364266] text-xs font-bold font-sans shadow-sm transition-all"
+                  title="Cambiar nombre a esta cuenta (ej. Mesa 2, Carlos...)"
+                >
+                  <span>{currentTab.name}</span>
+                  <span className="text-[#897863] font-normal">({cart.reduce((a, b) => a + b.quantity, 0)})</span>
+                  <Pencil size={11} className="text-[#C6BF81] ml-0.5" />
+                </button>
               </div>
             )}
           </div>
@@ -1597,6 +1652,89 @@ export const POSPage: React.FC = () => {
                   className="flex-1 py-2.5 rounded-xl bg-[#364266] text-[#FEF3DE] font-semibold text-sm hover:bg-[#242D49]"
                 >
                   Guardar Datos
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+
+      {/* Quick Rename Tab / Precuenta Modal */}
+      <AnimatePresence>
+        {renameModalTab && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl p-5 max-w-sm w-full shadow-2xl border border-[#364266]/10 space-y-4 font-sans"
+            >
+              <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <Pencil size={16} className="text-[#364266]" />
+                  <h3 className="font-bold text-base text-[#364266]">
+                    Nombre de la Cuenta
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setRenameModalTab(null)}
+                  className="p-1 rounded-lg hover:bg-gray-100 text-gray-500"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-semibold text-[#897863] block mb-1">
+                    Escribe un nombre personalizado:
+                  </label>
+                  <input
+                    type="text"
+                    autoFocus
+                    value={customRenameValue}
+                    onChange={(e) => setCustomRenameValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleApplyTabName(customRenameValue);
+                      if (e.key === "Escape") setRenameModalTab(null);
+                    }}
+                    placeholder="Ej. Mesa 3, Stiven, Llevar..."
+                    className="w-full p-2.5 rounded-xl border border-[#364266]/20 text-sm font-bold text-[#242D49] focus:outline-none focus:ring-2 focus:ring-[#364266]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-semibold text-[#897863] block mb-1.5">
+                    O selecciona un acceso rápido:
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {PRESET_TAB_NAMES.map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => handleApplyTabName(preset)}
+                        className="p-2 rounded-xl bg-[#FAF8EA] hover:bg-[#364266] hover:text-[#FEF3DE] text-[#364266] text-xs font-bold border border-[#C6BF81]/40 transition-all text-center truncate shadow-sm"
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => setRenameModalTab(null)}
+                  className="flex-1 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => handleApplyTabName(customRenameValue)}
+                  className="flex-1 py-2 rounded-xl bg-[#364266] text-[#FEF3DE] text-xs font-bold hover:bg-[#242D49] shadow-sm"
+                >
+                  Guardar Nombre
                 </button>
               </div>
             </motion.div>
