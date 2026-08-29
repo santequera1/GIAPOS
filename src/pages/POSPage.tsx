@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { PrintModal } from '@/components/PrintModal';
+import { CheckoutModal } from '@/components/CheckoutModal';
 import { printThermal, generateSalesTicketHtml } from '@/lib/thermalPrint';
 
 export interface GelatoFormat {
@@ -119,6 +120,7 @@ export const POSPage: React.FC = () => {
 
   const [activeTabId, setActiveTabId] = useState<string>(() => tabs[0]?.id || 'tab-1');
   const [showDiscountInput, setShowDiscountInput] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editingTabName, setEditingTabName] = useState<string>('');
   const [isRefreshingCatalog, setIsRefreshingCatalog] = useState(false);
@@ -552,6 +554,7 @@ export const POSPage: React.FC = () => {
         };
 
         setLastOrder(completedOrder);
+        setShowCheckoutModal(false);
 
         // Auto-print thermal ticket immediately!
         try {
@@ -984,7 +987,7 @@ export const POSPage: React.FC = () => {
       </div>
 
       {/* RIGHT COLUMN: Live Cart & Fast Checkout Panel */}
-      <div className={cn('w-full lg:w-[410px] xl:w-[450px] bg-white flex-col h-full border-l border-[#364266]/10 shadow-xl shrink-0 font-sans', mobileView === 'cart' ? 'flex' : 'hidden lg:flex')}>
+      <div className={cn('w-full lg:w-72 xl:w-80 bg-white flex-col h-full border-l border-[#364266]/10 shadow-xl shrink-0 font-sans', mobileView === 'cart' ? 'flex' : 'hidden lg:flex')}>
         {/* Precuentas / Multi-tabs Bar */}
         <div className="p-2 bg-[#242D49] text-white flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
           <div className="flex items-center gap-1 shrink-0 text-xs font-bold text-[#C6BF81] pl-1 pr-2">
@@ -1213,298 +1216,17 @@ export const POSPage: React.FC = () => {
           )}
         </div>
 
-        {/* Cart Totals & Fast Checkout Controls */}
-        <div className="p-2.5 sm:p-3 bg-[#FAF8EA] border-t border-[#364266]/15 shrink-0 space-y-2">
-          {/* Payment Method Selector (5 options including Mixed) */}
-          <div>
-            <label className="text-[10px] font-bold text-[#897863] uppercase tracking-wider block mb-1">
-              Método de Pago
-            </label>
-            <div className="grid grid-cols-5 gap-1">
-              <button
-                onClick={() => updateActiveTab({ paymentMethod: 'cash' })}
-                className={cn(
-                  'py-1.5 px-0.5 rounded-xl text-[10px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
-                  paymentMethod === 'cash'
-                    ? 'bg-[#364266] text-[#FEF3DE] shadow-md'
-                    : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
-                )}
-              >
-                <Banknote size={13} />
-                <span>Efectivo</span>
-              </button>
-
-              <button
-                onClick={() => updateActiveTab({ paymentMethod: 'card_debit' })}
-                className={cn(
-                  'py-1.5 px-0.5 rounded-xl text-[10px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
-                  paymentMethod === 'card_debit'
-                    ? 'bg-[#364266] text-[#FEF3DE] shadow-md'
-                    : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
-                )}
-              >
-                <CreditCard size={13} />
-                <span>T. Débito</span>
-              </button>
-
-              <button
-                onClick={() => updateActiveTab({ paymentMethod: 'card_credit' })}
-                className={cn(
-                  'py-1.5 px-0.5 rounded-xl text-[10px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
-                  paymentMethod === 'card_credit'
-                    ? 'bg-[#364266] text-[#FEF3DE] shadow-md'
-                    : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
-                )}
-              >
-                <CreditCard size={13} />
-                <span>T. Crédito</span>
-              </button>
-
-              <button
-                onClick={() => updateActiveTab({ paymentMethod: 'transfer' })}
-                className={cn(
-                  'py-1.5 px-0.5 rounded-xl text-[10px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
-                  paymentMethod === 'transfer'
-                    ? 'bg-[#364266] text-[#FEF3DE] shadow-md'
-                    : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
-                )}
-              >
-                <QrCode size={13} />
-                <span>QR/Transf</span>
-              </button>
-
-              <button
-                onClick={() => updateActiveTab({ paymentMethod: 'mixed' })}
-                className={cn(
-                  'py-1.5 px-0.5 rounded-xl text-[10px] sm:text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all',
-                  paymentMethod === 'mixed'
-                    ? 'bg-[#242D49] text-[#C6BF81] ring-2 ring-[#C6BF81] shadow-md'
-                    : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-gray-50'
-                )}
-              >
-                <Shuffle size={13} />
-                <span>Mixto</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Cash Tender Buttons & Calculator */}
-          {paymentMethod === 'cash' && (
-            <div className="space-y-1.5 pt-0.5">
-              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
-                <button
-                  onClick={() => updateActiveTab({ cashReceived: String(total) })}
-                  className="px-2 py-0.5 rounded-lg bg-white border border-[#364266]/20 hover:bg-[#FAF8EA] text-[10px] font-bold text-[#364266] whitespace-nowrap shadow-sm"
-                >
-                  Exacto (${formatPrice(total)})
-                </button>
-                {QUICK_CASH_AMOUNTS.filter(a => a >= total).map(amt => (
-                  <button
-                    key={amt}
-                    onClick={() => updateActiveTab({ cashReceived: String(amt) })}
-                    className="px-2 py-0.5 rounded-lg bg-white border border-[#364266]/20 hover:bg-[#FAF8EA] text-[10px] font-bold text-[#364266] whitespace-nowrap shadow-sm"
-                  >
-                    ${formatPrice(amt)}
-                  </button>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-2 gap-1.5">
-                <div>
-                  <label className="text-[9px] font-bold text-[#897863]">Efectivo Recibido</label>
-                  <input
-                    type="number"
-                    value={cashReceived}
-                    onChange={(e) => updateActiveTab({ cashReceived: e.target.value })}
-                    placeholder={String(total)}
-                    className="w-full p-1.5 text-xs font-bold bg-white rounded-xl border border-[#364266]/20 focus:ring-2 focus:ring-[#364266]"
-                  />
-                </div>
-                <div>
-                  <label className="text-[9px] font-bold text-[#897863]">Cambio / Vueltos</label>
-                  <div className={cn(
-                    'p-1.5 text-xs font-bold rounded-xl border text-right truncate',
-                    change >= 0
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                      : 'bg-red-50 text-red-600 border-red-200'
-                  )}>
-                    {change >= 0 ? formatPrice(change) : 'Faltan ' + formatPrice(Math.abs(change))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Split Payment (Pago Combinado / Mixto) UI */}
-          {paymentMethod === 'mixed' && (
-            <div className="p-2.5 rounded-xl bg-white border border-[#C6BF81]/60 space-y-2 text-xs">
-              <div className="flex items-center justify-between text-[11px] font-bold text-[#364266] pb-1 border-b border-gray-100">
-                <span className="flex items-center gap-1">
-                  <Shuffle size={13} className="text-[#C6BF81]" /> Desglose de Pago Mixto
-                </span>
-                <span className="text-[#344268]">{formatPrice(total)}</span>
-              </div>
-
-              {/* Method 1 */}
-              <div className="grid grid-cols-2 gap-1.5">
-                <div>
-                  <label className="text-[9px] text-[#897863] font-bold">1er Método</label>
-                  <select
-                    value={paymentSplit.method1}
-                    onChange={(e) => updateActiveTab({
-                      paymentSplit: { ...paymentSplit, method1: e.target.value as PaymentMethod }
-                    })}
-                    className="w-full p-1 text-xs rounded-lg border border-gray-200 bg-white"
-                  >
-                    <option value="cash">💵 Efectivo</option>
-                    <option value="card_debit">💳 T. Débito</option>
-                    <option value="card_credit">💳 T. Crédito</option>
-                    <option value="transfer">📱 QR / Nequi</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[9px] text-[#897863] font-bold">Monto 1</label>
-                  <input
-                    type="number"
-                    value={paymentSplit.amount1 || ''}
-                    onChange={(e) => {
-                      const a1 = Number(e.target.value) || 0;
-                      const a2 = Math.max(0, total - a1);
-                      updateActiveTab({
-                        paymentSplit: { ...paymentSplit, amount1: a1, amount2: a2 }
-                      });
-                    }}
-                    placeholder="0"
-                    className="w-full p-1 text-xs font-bold rounded-lg border border-gray-200"
-                  />
-                </div>
-              </div>
-
-              {/* Method 2 */}
-              <div className="grid grid-cols-2 gap-1.5">
-                <div>
-                  <label className="text-[9px] text-[#897863] font-bold">2do Método</label>
-                  <select
-                    value={paymentSplit.method2}
-                    onChange={(e) => updateActiveTab({
-                      paymentSplit: { ...paymentSplit, method2: e.target.value as PaymentMethod }
-                    })}
-                    className="w-full p-1 text-xs rounded-lg border border-gray-200 bg-white"
-                  >
-                    <option value="card_debit">💳 T. Débito</option>
-                    <option value="card_credit">💳 T. Crédito</option>
-                    <option value="transfer">📱 QR / Nequi</option>
-                    <option value="cash">💵 Efectivo</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[9px] text-[#897863] font-bold">Monto 2 (Restante)</label>
-                  <input
-                    type="number"
-                    value={paymentSplit.amount2 || ''}
-                    onChange={(e) => {
-                      const a2 = Number(e.target.value) || 0;
-                      const a1 = Math.max(0, total - a2);
-                      updateActiveTab({
-                        paymentSplit: { ...paymentSplit, amount1: a1, amount2: a2 }
-                      });
-                    }}
-                    placeholder="0"
-                    className="w-full p-1 text-xs font-bold rounded-lg border border-gray-200"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Discount / Promo Controls */}
-          <div className="pt-1.5 border-t border-[#364266]/10">
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setShowDiscountInput(!showDiscountInput)}
-                className={cn(
-                  'text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 transition-all',
-                  discountValue > 0
-                    ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                    : 'bg-white text-[#364266] border border-[#364266]/15 hover:bg-[#FAF8EA]'
-                )}
-              >
-                <Tag size={11} />
-                <span>{discountValue > 0 ? `Descuento: ${discountType === 'percent' ? discountValue + '%' : formatPrice(discountValue)}` : '+ Aplicar Descuento'}</span>
-              </button>
-
-              {discountValue > 0 && (
-                <button
-                  type="button"
-                  onClick={() => updateActiveTab({ discountValue: 0 })}
-                  className="text-[10px] text-red-600 hover:underline flex items-center gap-0.5"
-                >
-                  <X size={10} /> Quitar
-                </button>
-              )}
-            </div>
-
-            {showDiscountInput && (
-              <div className="mt-1.5 p-2 rounded-xl bg-white border border-[#C6BF81]/50 space-y-1.5 animate-in fade-in duration-150">
-                <div className="flex gap-1">
-                  {[5, 10, 15, 20, 50].map((pct) => (
-                    <button
-                      key={pct}
-                      type="button"
-                      onClick={() => {
-                        updateActiveTab({ discountType: 'percent', discountValue: pct });
-                        setShowDiscountInput(false);
-                      }}
-                      className={cn(
-                        'flex-1 py-1 text-[10px] font-bold rounded-lg border transition-all',
-                        discountType === 'percent' && discountValue === pct
-                          ? 'bg-[#364266] text-[#FEF3DE] border-[#364266]'
-                          : 'bg-gray-50 hover:bg-[#FAF8EA] text-[#364266] border-gray-200'
-                      )}
-                    >
-                      {pct}%
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex gap-1.5 items-center pt-0.5">
-                  <select
-                    value={discountType}
-                    onChange={(e) => updateActiveTab({ discountType: e.target.value as 'percent' | 'fixed' })}
-                    className="p-1 text-[10px] font-bold rounded-lg border border-gray-200 bg-white"
-                  >
-                    <option value="percent">% Porc.</option>
-                    <option value="fixed">$ COP</option>
-                  </select>
-                  <input
-                    type="number"
-                    value={discountValue || ''}
-                    onChange={(e) => updateActiveTab({ discountValue: Number(e.target.value) || 0 })}
-                    placeholder={discountType === 'percent' ? 'Ej. 10 (%)' : 'Ej. 5000 ($)'}
-                    className="flex-1 p-1 text-xs font-bold rounded-lg border border-gray-200"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowDiscountInput(false)}
-                    className="px-2 py-1 rounded-lg bg-[#364266] text-[#FEF3DE] text-[10px] font-bold"
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
+        {/* Cart Totals & Go to Checkout Button */}
+        <div className="p-3 bg-[#FAF8EA] border-t border-[#364266]/15 shrink-0 space-y-2.5">
           {/* Totals Summary */}
-          <div className="pt-1 border-t border-[#364266]/10 space-y-0.5 text-xs">
+          <div className="space-y-1 text-xs">
             {discountAmount > 0 && (
               <>
-                <div className="flex justify-between text-[#897863] text-[11px]">
+                <div className="flex justify-between text-[#897863]">
                   <span>Subtotal:</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-red-600 font-bold text-[11px]">
+                <div className="flex justify-between text-red-600 font-bold">
                   <span>Descuento ({discountType === 'percent' ? `${discountValue}%` : 'Monto'}):</span>
                   <span>-{formatPrice(discountAmount)}</span>
                 </div>
@@ -1516,28 +1238,43 @@ export const POSPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Primary Action Button */}
+          {/* Primary Action Button -> Opens Dedicated Checkout Modal */}
           <button
-            onClick={handleCheckout}
-            disabled={cart.length === 0 || isSubmitting || (paymentMethod === 'cash' && numericCash > 0 && numericCash < total)}
+            onClick={() => setShowCheckoutModal(true)}
+            disabled={cart.length === 0}
             className={cn(
-              'w-full py-2.5 sm:py-3.5 px-4 rounded-xl font-sans font-bold text-sm sm:text-base text-[#FEF3DE] flex items-center justify-center gap-2 shadow-lg transition-all',
-              cart.length > 0 && !isSubmitting
+              'w-full py-3 sm:py-3.5 px-4 rounded-2xl font-sans font-bold text-sm sm:text-base text-[#FEF3DE] flex items-center justify-center gap-2 shadow-lg transition-all',
+              cart.length > 0
                 ? 'bg-gradient-to-r from-[#364266] to-[#242D49] hover:shadow-xl hover:scale-[1.01] active:scale-[0.99]'
                 : 'bg-gray-400 cursor-not-allowed'
             )}
           >
-            {isSubmitting ? (
-              <span>Procesando...</span>
-            ) : (
-              <>
-                <Sparkles size={16} />
-                <span>COBRAR {formatPrice(total)}</span>
-              </>
-            )}
+            <Sparkles size={17} />
+            <span>COBRAR {formatPrice(total)} ➔</span>
           </button>
         </div>
       </div>
+
+      {/* Dedicated Checkout Modal (Step 2) */}
+      <CheckoutModal
+        isOpen={showCheckoutModal}
+        onClose={() => setShowCheckoutModal(false)}
+        tabName={currentTab.name}
+        cart={cart}
+        customer={customer}
+        subtotal={subtotal}
+        discountAmount={discountAmount}
+        discountType={discountType}
+        discountValue={discountValue}
+        total={total}
+        paymentMethod={paymentMethod}
+        paymentSplit={paymentSplit}
+        cashReceived={cashReceived}
+        orderNotes={orderNotes}
+        isSubmitting={isSubmitting}
+        onUpdateTab={updateActiveTab}
+        onConfirmCheckout={handleCheckout}
+      />
 
       {/* Customer Modal */}
       <AnimatePresence>
