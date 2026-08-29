@@ -176,15 +176,21 @@ export const PrintModal: React.FC<PrintModalProps> = ({ isOpen, onClose, order }
           </div>
         </div>
 
-        {/* Footer Action Button */}
-        <div className="p-3.5 bg-white border-t border-gray-200 shrink-0">
+        {/* Footer Action Buttons */}
+        <div className="p-3.5 bg-white border-t border-gray-200 shrink-0 flex gap-2">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#364266] font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all"
+          >
+            <span>✓ Siguiente Venta</span>
+          </button>
           <button
             onClick={handlePrint}
             disabled={isPrinting}
-            className="w-full py-3 rounded-xl bg-[#0091FF] hover:bg-[#0080E6] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-[0.99] disabled:opacity-50"
+            className="flex-1 py-3 rounded-xl bg-[#364266] hover:bg-[#242D49] text-[#FEF3DE] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-[0.99] disabled:opacity-50"
           >
-            <Printer size={17} />
-            <span>{isPrinting ? 'Preparando...' : 'Imprimir Ticket Corto'}</span>
+            <Printer size={16} />
+            <span>{isPrinting ? 'Imprimiendo...' : '🖨️ Imprimir Factura'}</span>
           </button>
         </div>
       </div>

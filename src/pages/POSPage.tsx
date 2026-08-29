@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { PrintModal } from '@/components/PrintModal';
+import { printThermal, generateSalesTicketHtml } from '@/lib/thermalPrint';
 
 export interface GelatoFormat {
   id: string;
@@ -551,7 +552,14 @@ export const POSPage: React.FC = () => {
         };
 
         setLastOrder(completedOrder);
-        setCountdown(3);
+
+        // Auto-print thermal ticket immediately!
+        try {
+          const html = generateSalesTicketHtml(completedOrder, { paperSize: '80mm' });
+          printThermal(html, `Factura-GIA-${newId}`);
+        } catch (printErr) {
+          console.error('Error in auto thermal print:', printErr);
+        }
 
         // Remove or reset completed tab
         if (tabs.length > 1) {
@@ -563,7 +571,7 @@ export const POSPage: React.FC = () => {
         }
 
         setMobileView('catalog');
-        toast.success(`¡Venta #${newId} completada con éxito!`);
+        toast.success(`¡Venta #${newId} completada e impresa!`);
       } else {
         toast.error('No se pudo procesar la venta. Intenta nuevamente.');
       }
@@ -574,16 +582,6 @@ export const POSPage: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-
-  useEffect(() => {
-    if (!lastOrder) return;
-    if (countdown <= 0) {
-      setLastOrder(null);
-      return;
-    }
-    const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [lastOrder, countdown]);
 
   return (
     <div className="flex flex-col lg:flex-row h-full w-full bg-[#FEF3DE] text-[#364266] overflow-hidden">
