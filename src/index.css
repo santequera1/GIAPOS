@@ -179,21 +179,40 @@
   animation: pulse-glow 2.5s ease-in-out infinite;
 }
 
-/* Thermal Printing Support */
+/* Thermal Printing Direct DOM Engine */
+@media screen {
+  #pos-thermal-print-area {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+}
+
 @media print {
   @page {
     margin: 0mm !important;
     size: auto !important;
   }
+  
   html, body {
     margin: 0 !important;
     padding: 0 !important;
-    background: #fff !important;
-    color: #000 !important;
+    width: 100% !important;
     height: auto !important;
     min-height: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
     overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
+  
+  #root,
   .no-print,
   .print\:hidden,
   header,
@@ -202,8 +221,41 @@
   button,
   .toaster,
   [data-sonner-toaster],
+  .fixed.inset-0.z-50,
   .fixed.inset-0.z-50.bg-black\/60,
   .fixed.inset-0.z-50.bg-black\/70 {
     display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
   }
+
+  #pos-thermal-print-area {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 72mm !important;
+    max-width: 72mm !important;
+    margin: 0 auto !important;
+    padding: 1.5mm 1mm 12mm 1mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, monospace, sans-serif !important;
+    font-size: 10.5px !important;
+    line-height: 1.25 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  #pos-thermal-print-area .text-center { text-align: center; }
+  #pos-thermal-print-area .text-right { text-align: right; }
+  #pos-thermal-print-area .text-left { text-align: left; }
+  #pos-thermal-print-area .font-bold { font-weight: bold; }
+  #pos-thermal-print-area .divider { border-top: 1.2px solid #000; margin: 3px 0; }
+  #pos-thermal-print-area .dashed { border-top: 1px dashed #333; margin: 3px 0; }
+  #pos-thermal-print-area .row { display: flex; justify-content: space-between; align-items: flex-start; margin: 1.5px 0; }
+  #pos-thermal-print-area .item-desc { font-weight: bold; word-break: break-word; }
+  #pos-thermal-print-area .item-flavors { font-size: 8.5px; color: #222; padding-left: 6px; font-style: italic; }
 }
