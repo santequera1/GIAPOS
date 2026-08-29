@@ -41,8 +41,8 @@ export function printThermal(htmlInnerContent: string, title = 'Impresión POS')
 
 export function generateSalesTicketHtml(order: any, options: PrintOptions = {}): string {
   const paperSize = options.paperSize || '80mm';
-  const widthCss = paperSize === '58mm' ? '48mm' : '72mm';
-  const fontSize = paperSize === '58mm' ? '9px' : '10.5px';
+  const widthCss = paperSize === '58mm' ? '46mm' : '65mm';
+  const fontSize = paperSize === '58mm' ? '9px' : '10px';
 
   const items = order.items || [];
   const subtotal = order.subtotal || items.reduce((a: number, i: any) => a + (i.price || 0) * (i.quantity || 1), 0);
@@ -100,16 +100,16 @@ export function generateSalesTicketHtml(order: any, options: PrintOptions = {}):
 
       <div style="margin-bottom: 2px;">
         <div class="row font-bold" style="font-size: 9px; border-bottom: 1px dashed #666; padding-bottom: 2px;">
-          <span style="width: 25px;">Cant</span>
-          <span style="flex: 1; text-align: left;">Producto</span>
-          <span style="width: 55px; text-align: right;">Total</span>
+          <span style="width: 22px;">Cant</span>
+          <span style="flex: 1; text-align: left; padding-left: 2px;">Producto</span>
+          <span style="width: 58px; text-align: right;">Total</span>
         </div>
         ${items.map((item: any) => `
           <div style="margin: 2px 0;">
             <div class="row" style="font-size: ${fontSize};">
-              <span style="width: 25px; font-weight: bold;">${item.quantity || 1}x</span>
-              <span style="flex: 1; text-align: left;" class="item-desc">${item.name}</span>
-              <span style="width: 55px; text-align: right; font-weight: bold;">${formatPrice((item.price || 0) * (item.quantity || 1))}</span>
+              <span style="width: 22px; font-weight: bold;">${item.quantity || 1}x</span>
+              <span style="flex: 1; text-align: left; padding-left: 2px;" class="item-desc">${item.name}</span>
+              <span style="width: 58px; text-align: right; font-weight: bold;">${formatPrice((item.price || 0) * (item.quantity || 1))}</span>
             </div>
             ${item.flavors ? `<div class="item-flavors">• ${item.flavors}</div>` : ''}
           </div>
@@ -121,7 +121,7 @@ export function generateSalesTicketHtml(order: any, options: PrintOptions = {}):
       <div style="font-size: 9.5px;">
         <div class="row"><span>Subtotal:</span><span>${formatPrice(subtotal)}</span></div>
         ${discount > 0 ? `<div class="row font-bold" style="color: #000;"><span>Descuento:</span><span>-${formatPrice(discount)}</span></div>` : ''}
-        <div class="row font-bold" style="font-size: 12px; margin-top: 3px; border-top: 1px solid #000; padding-top: 2px;">
+        <div class="row font-bold" style="font-size: 11.5px; margin-top: 3px; border-top: 1px solid #000; padding-top: 2px;">
           <span>TOTAL A PAGAR:</span>
           <span>${formatPrice(total)}</span>
         </div>
@@ -130,7 +130,7 @@ export function generateSalesTicketHtml(order: any, options: PrintOptions = {}):
           <span class="font-bold">${paymentMethodLabel}</span>
         </div>
         ${order.paymentSplit ? `
-          <div style="font-size: 8.5px; padding-left: 6px;">
+          <div style="font-size: 8.5px; padding-left: 4px;">
             <div>• ${order.paymentSplit.method1 === 'cash' ? 'Efectivo' : order.paymentSplit.method1 === 'card_debit' ? 'T. Débito' : order.paymentSplit.method1 === 'card_credit' ? 'T. Crédito' : 'Transferencia'}: ${formatPrice(order.paymentSplit.amount1)}</div>
             <div>• ${order.paymentSplit.method2 === 'cash' ? 'Efectivo' : order.paymentSplit.method2 === 'card_debit' ? 'T. Débito' : order.paymentSplit.method2 === 'card_credit' ? 'T. Crédito' : 'Transferencia'}: ${formatPrice(order.paymentSplit.amount2)}</div>
           </div>
@@ -153,7 +153,7 @@ export function generateSalesTicketHtml(order: any, options: PrintOptions = {}):
 
 export function generateZReportHtml(shiftData: any, options: PrintOptions & { isReportX?: boolean } = {}): string {
   const paperSize = options.paperSize || '80mm';
-  const widthCss = paperSize === '58mm' ? '48mm' : '72mm';
+  const widthCss = paperSize === '58mm' ? '46mm' : '65mm';
 
   const shiftId = shiftData.id || 1;
   const cashier = shiftData.cashierName || shiftData.cashier_name || 'Cajero Gia';

@@ -234,14 +234,14 @@
     display: block !important;
     visibility: visible !important;
     position: static !important;
-    width: 72mm !important;
-    max-width: 72mm !important;
+    width: 65mm !important;
+    max-width: 65mm !important;
     margin: 0 auto !important;
     padding: 1.5mm 1mm 12mm 1mm !important;
     background: #ffffff !important;
     color: #000000 !important;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, monospace, sans-serif !important;
-    font-size: 10.5px !important;
+    font-size: 10px !important;
     line-height: 1.25 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
