@@ -41,8 +41,8 @@ export function printThermal(htmlInnerContent: string, title = 'Impresión POS')
 
 export function generateSalesTicketHtml(order: any, options: PrintOptions = {}): string {
   const paperSize = options.paperSize || '80mm';
-  const widthCss = paperSize === '58mm' ? '46mm' : '65mm';
-  const fontSize = paperSize === '58mm' ? '9px' : '10px';
+  const widthCss = paperSize === '58mm' ? '46mm' : '56mm';
+  const fontSize = paperSize === '58mm' ? '8.5px' : '9.5px';
 
   const items = order.items || [];
   const subtotal = order.subtotal || items.reduce((a: number, i: any) => a + (i.price || 0) * (i.quantity || 1), 0);
@@ -76,22 +76,22 @@ export function generateSalesTicketHtml(order: any, options: PrintOptions = {}):
   return `
     <div class="ticket" style="width: ${widthCss}; max-width: ${widthCss};">
       <div class="text-center">
-        <p class="font-bold" style="font-size: 13px; letter-spacing: 0.5px;">GIACARTAGENA SAS</p>
-        <p class="font-bold" style="font-size: 11px;">GIA GELATERÍA ARTESANAL</p>
-        <p style="font-size: 9px;">NIT: 901961461-3 • CALLE BALOCO</p>
-        <p style="font-size: 9px;">Cartagena - Tel: 3007856068</p>
+        <p class="font-bold" style="font-size: 12.5px; letter-spacing: 0.5px;">GIACARTAGENA SAS</p>
+        <p class="font-bold" style="font-size: 10.5px;">GIA GELATERÍA ARTESANAL</p>
+        <p style="font-size: 8.5px;">NIT: 901961461-3 • CALLE BALOCO</p>
+        <p style="font-size: 8.5px;">Cartagena - Tel: 3007856068</p>
       </div>
 
       <div class="divider"></div>
 
-      <div class="text-center" style="font-size: 9.5px;">
+      <div class="text-center" style="font-size: 9px;">
         <p class="font-bold">DOC. INGRESO No. ${docNumber}</p>
-        <p style="font-size: 8.5px;">${formattedDate} • ${formattedTime}</p>
+        <p style="font-size: 8px;">${formattedDate} • ${formattedTime}</p>
       </div>
 
       <div class="dashed"></div>
 
-      <div style="font-size: 9px; margin-bottom: 2px;">
+      <div style="font-size: 8.5px; margin-bottom: 2px;">
         <div class="row"><span><strong>Cliente:</strong> ${customerName}</span></div>
         <div class="row"><span><strong>C.C / NIT:</strong> ${customerDoc}</span></div>
       </div>
@@ -99,17 +99,17 @@ export function generateSalesTicketHtml(order: any, options: PrintOptions = {}):
       <div class="divider"></div>
 
       <div style="margin-bottom: 2px;">
-        <div class="row font-bold" style="font-size: 9px; border-bottom: 1px dashed #666; padding-bottom: 2px;">
-          <span style="width: 22px;">Cant</span>
+        <div class="row font-bold" style="font-size: 8.5px; border-bottom: 1px dashed #666; padding-bottom: 2px;">
+          <span style="width: 20px;">Cant</span>
           <span style="flex: 1; text-align: left; padding-left: 2px;">Producto</span>
-          <span style="width: 58px; text-align: right;">Total</span>
+          <span style="width: 55px; text-align: right; white-space: nowrap;">Total</span>
         </div>
         ${items.map((item: any) => `
           <div style="margin: 2px 0;">
             <div class="row" style="font-size: ${fontSize};">
-              <span style="width: 22px; font-weight: bold;">${item.quantity || 1}x</span>
+              <span style="width: 20px; font-weight: bold;">${item.quantity || 1}x</span>
               <span style="flex: 1; text-align: left; padding-left: 2px;" class="item-desc">${item.name}</span>
-              <span style="width: 58px; text-align: right; font-weight: bold;">${formatPrice((item.price || 0) * (item.quantity || 1))}</span>
+              <span style="width: 55px; text-align: right; font-weight: bold; white-space: nowrap;">${formatPrice((item.price || 0) * (item.quantity || 1))}</span>
             </div>
             ${item.flavors ? `<div class="item-flavors">• ${item.flavors}</div>` : ''}
           </div>
@@ -118,32 +118,32 @@ export function generateSalesTicketHtml(order: any, options: PrintOptions = {}):
 
       <div class="divider"></div>
 
-      <div style="font-size: 9.5px;">
-        <div class="row"><span>Subtotal:</span><span>${formatPrice(subtotal)}</span></div>
-        ${discount > 0 ? `<div class="row font-bold" style="color: #000;"><span>Descuento:</span><span>-${formatPrice(discount)}</span></div>` : ''}
-        <div class="row font-bold" style="font-size: 11.5px; margin-top: 3px; border-top: 1px solid #000; padding-top: 2px;">
+      <div style="font-size: 9px;">
+        <div class="row"><span>Subtotal:</span><span style="white-space: nowrap;">${formatPrice(subtotal)}</span></div>
+        ${discount > 0 ? `<div class="row font-bold" style="color: #000;"><span>Descuento:</span><span style="white-space: nowrap;">-${formatPrice(discount)}</span></div>` : ''}
+        <div class="row font-bold" style="font-size: 11px; margin-top: 3px; border-top: 1px solid #000; padding-top: 2px;">
           <span>TOTAL A PAGAR:</span>
-          <span>${formatPrice(total)}</span>
+          <span style="white-space: nowrap;">${formatPrice(total)}</span>
         </div>
-        <div class="row" style="font-size: 9px; margin-top: 2px;">
+        <div class="row" style="font-size: 8.5px; margin-top: 2px;">
           <span>Forma de Pago:</span>
           <span class="font-bold">${paymentMethodLabel}</span>
         </div>
         ${order.paymentSplit ? `
-          <div style="font-size: 8.5px; padding-left: 4px;">
+          <div style="font-size: 8px; padding-left: 4px;">
             <div>• ${order.paymentSplit.method1 === 'cash' ? 'Efectivo' : order.paymentSplit.method1 === 'card_debit' ? 'T. Débito' : order.paymentSplit.method1 === 'card_credit' ? 'T. Crédito' : 'Transferencia'}: ${formatPrice(order.paymentSplit.amount1)}</div>
             <div>• ${order.paymentSplit.method2 === 'cash' ? 'Efectivo' : order.paymentSplit.method2 === 'card_debit' ? 'T. Débito' : order.paymentSplit.method2 === 'card_credit' ? 'T. Crédito' : 'Transferencia'}: ${formatPrice(order.paymentSplit.amount2)}</div>
           </div>
         ` : ''}
         ${order.paymentMethod === 'cash' && order.cashReceived > 0 ? `
-          <div class="row" style="font-size: 8.5px;"><span>Recibido:</span><span>${formatPrice(order.cashReceived)}</span></div>
-          <div class="row" style="font-size: 8.5px;"><span>Cambio / Vueltas:</span><span>${formatPrice(order.cashChange || (order.cashReceived - total))}</span></div>
+          <div class="row" style="font-size: 8px;"><span>Recibido:</span><span style="white-space: nowrap;">${formatPrice(order.cashReceived)}</span></div>
+          <div class="row" style="font-size: 8px;"><span>Cambio / Vueltas:</span><span style="white-space: nowrap;">${formatPrice(order.cashChange || (order.cashReceived - total))}</span></div>
         ` : ''}
       </div>
 
       <div class="dashed" style="margin-top: 5px;"></div>
 
-      <div class="text-center" style="font-size: 8.5px; margin-top: 3px; line-height: 1.3;">
+      <div class="text-center" style="font-size: 8px; margin-top: 3px; line-height: 1.3;">
         <p class="font-bold">¡Gracias por su visita a Gia Gelatería!</p>
         <p>Auténtico Gelato Italiano en Cartagena</p>
       </div>
@@ -153,7 +153,8 @@ export function generateSalesTicketHtml(order: any, options: PrintOptions = {}):
 
 export function generateZReportHtml(shiftData: any, options: PrintOptions & { isReportX?: boolean } = {}): string {
   const paperSize = options.paperSize || '80mm';
-  const widthCss = paperSize === '58mm' ? '46mm' : '65mm';
+  const widthCss = paperSize === '58mm' ? '46mm' : '56mm';
+  const fontSize = paperSize === '58mm' ? '8.5px' : '9px';
 
   const shiftId = shiftData.id || 1;
   const cashier = shiftData.cashierName || shiftData.cashier_name || 'Cajero Gia';
@@ -175,62 +176,62 @@ export function generateZReportHtml(shiftData: any, options: PrintOptions & { is
   return `
     <div class="ticket" style="width: ${widthCss}; max-width: ${widthCss};">
       <div class="text-center">
-        <p class="font-bold" style="font-size: 12.5px; letter-spacing: 0.5px;">GIACARTAGENA SAS</p>
-        <p class="font-bold" style="font-size: 11px;">GIA GELATERÍA ARTESANAL</p>
-        <p style="font-size: 8.5px;">NIT: 901961461-3 • CALLE BALOCO</p>
-        <p class="font-bold" style="font-size: 10px; margin-top: 3px; border: 1px solid #000; padding: 2px 4px; display: inline-block;">
+        <p class="font-bold" style="font-size: 12px; letter-spacing: 0.5px;">GIACARTAGENA SAS</p>
+        <p class="font-bold" style="font-size: 10.5px;">GIA GELATERÍA ARTESANAL</p>
+        <p style="font-size: 8px;">NIT: 901961461-3 • CALLE BALOCO</p>
+        <p class="font-bold" style="font-size: 9.5px; margin-top: 3px; border: 1px solid #000; padding: 2px 4px; display: inline-block;">
           ${reportTitle}
         </p>
       </div>
 
       <div class="divider"></div>
 
-      <div style="font-size: 9px;">
-        <div class="row"><span><strong>Turno ID:</strong> #${shiftId}</span><span>${dateStr}</span></div>
+      <div style="font-size: 8.5px;">
+        <div class="row"><span><strong>Turno ID:</strong> #${shiftId}</span><span style="white-space: nowrap;">${dateStr}</span></div>
         <div class="row"><span><strong>Cajero:</strong> ${cashier}</span><span><strong>Pedidos:</strong> ${totalOrders}</span></div>
       </div>
 
       <div class="divider"></div>
 
-      <div style="font-size: 9.5px;">
-        <p class="font-bold" style="font-size: 9px; text-decoration: underline; margin-bottom: 2px;">VENTAS POR MEDIO DE PAGO:</p>
-        <div class="row"><span>Ventas Efectivo:</span><span class="font-bold">+${formatPrice(cash)}</span></div>
-        <div class="row"><span>Ventas T. Débito:</span><span>${formatPrice(debit)}</span></div>
-        <div class="row"><span>Ventas T. Crédito:</span><span>${formatPrice(credit)}</span></div>
-        <div class="row"><span>Ventas QR / Nequi:</span><span>${formatPrice(transfer)}</span></div>
-        <div class="row font-bold" style="font-size: 11px; margin-top: 3px; border-top: 1px solid #000; padding-top: 2px;">
+      <div style="font-size: 9px;">
+        <p class="font-bold" style="font-size: 8.5px; text-decoration: underline; margin-bottom: 2px;">VENTAS POR MEDIO DE PAGO:</p>
+        <div class="row"><span>Ventas Efectivo:</span><span class="font-bold" style="white-space: nowrap;">+${formatPrice(cash)}</span></div>
+        <div class="row"><span>Ventas T. Débito:</span><span style="white-space: nowrap;">${formatPrice(debit)}</span></div>
+        <div class="row"><span>Ventas T. Crédito:</span><span style="white-space: nowrap;">${formatPrice(credit)}</span></div>
+        <div class="row"><span>Ventas QR / Nequi:</span><span style="white-space: nowrap;">${formatPrice(transfer)}</span></div>
+        <div class="row font-bold" style="font-size: 10.5px; margin-top: 3px; border-top: 1px solid #000; padding-top: 2px;">
           <span>TOTAL VENTAS:</span>
-          <span>${formatPrice(totalSales)}</span>
+          <span style="white-space: nowrap;">${formatPrice(totalSales)}</span>
         </div>
       </div>
 
       <div class="dashed"></div>
 
-      <div style="font-size: 9.5px;">
-        <p class="font-bold" style="font-size: 9px; text-decoration: underline; margin-bottom: 2px;">ARQUEO Y CUADRE DE GAVETA:</p>
-        <div class="row"><span>Base Inicial en Caja:</span><span>${formatPrice(initial)}</span></div>
-        <div class="row"><span>+ Efectivo por Ventas:</span><span>${formatPrice(cash)}</span></div>
-        ${withdrawals > 0 ? `<div class="row font-bold" style="color: #000;"><span>- Retiros / Gastos:</span><span>-${formatPrice(withdrawals)}</span></div>` : ''}
-        <div class="row font-bold" style="font-size: 10px; border-top: 1px dashed #666; padding-top: 2px;">
+      <div style="font-size: 9px;">
+        <p class="font-bold" style="font-size: 8.5px; text-decoration: underline; margin-bottom: 2px;">ARQUEO Y CUADRE DE GAVETA:</p>
+        <div class="row"><span>Base Inicial en Caja:</span><span style="white-space: nowrap;">${formatPrice(initial)}</span></div>
+        <div class="row"><span>+ Efectivo por Ventas:</span><span style="white-space: nowrap;">${formatPrice(cash)}</span></div>
+        ${withdrawals > 0 ? `<div class="row font-bold" style="color: #000;"><span>- Retiros / Gastos:</span><span style="white-space: nowrap;">-${formatPrice(withdrawals)}</span></div>` : ''}
+        <div class="row font-bold" style="font-size: 9.5px; border-top: 1px dashed #666; padding-top: 2px;">
           <span>= Efectivo Esperado:</span>
-          <span>${formatPrice(expected)}</span>
+          <span style="white-space: nowrap;">${formatPrice(expected)}</span>
         </div>
-        <div class="row font-bold" style="font-size: 10px;">
+        <div class="row font-bold" style="font-size: 9.5px;">
           <span>= Efectivo Contado:</span>
-          <span>${formatPrice(actual)}</span>
+          <span style="white-space: nowrap;">${formatPrice(actual)}</span>
         </div>
-        <div class="row font-bold" style="font-size: 10.5px; margin-top: 2px; border-top: 1px solid #000; padding-top: 2px;">
+        <div class="row font-bold" style="font-size: 10px; margin-top: 2px; border-top: 1px solid #000; padding-top: 2px;">
           <span>DIFERENCIA CAJA:</span>
-          <span>${diff === 0 ? 'Exacto ($0)' : diff > 0 ? '+' + formatPrice(diff) + ' (Sobrante)' : formatPrice(diff) + ' (Faltante)'}</span>
+          <span style="white-space: nowrap;">${diff === 0 ? 'Exacto ($0)' : diff > 0 ? '+' + formatPrice(diff) + ' (Sobrante)' : formatPrice(diff) + ' (Faltante)'}</span>
         </div>
       </div>
 
       <div class="divider"></div>
 
-      <div style="margin-top: 8px; padding-top: 4px; text-align: center; font-size: 8.5px;">
+      <div style="margin-top: 8px; padding-top: 4px; text-align: center; font-size: 8px;">
         <div style="border-bottom: 1px solid #000; width: 60%; margin: 15px auto 4px auto;"></div>
         <p>Firma Cajero / Responsable</p>
-        <p style="margin-top: 4px; font-size: 8px; color: #444;">Gia Gelatería POS • Sistema de Facturación</p>
+        <p style="margin-top: 4px; font-size: 7.5px; color: #444;">Gia Gelatería POS • Sistema de Facturación</p>
       </div>
     </div>
   `;
