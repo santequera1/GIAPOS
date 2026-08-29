@@ -39,14 +39,15 @@ export interface GelatoFormat {
   price: number;
   desc: string;
   emoji: string;
+  image: string;
 }
 
 const GELATO_FORMATS: GelatoFormat[] = [
-  { id: 'vaso_pequeno', name: 'Vaso Pequeño', container: 'Vaso', capacity: '4 oz', scoops: 1, price: 15000, desc: '1 sabor (4 oz)', emoji: '🍨' },
-  { id: 'vaso_grande',  name: 'Vaso Grande',  container: 'Vaso', capacity: '6 oz', scoops: 2, price: 21000, desc: '2 sabores (6 oz)', emoji: '🍨' },
-  { id: 'cono_pequeno', name: 'Cono Pequeño', container: 'Cono', capacity: 'Cono', scoops: 1, price: 15000, desc: '1 sabor en cono', emoji: '🍦' },
-  { id: 'cono_grande',  name: 'Cono Grande',  container: 'Cono', capacity: 'Cono', scoops: 2, price: 21000, desc: '2 sabores en cono', emoji: '🍦' },
-  { id: 'litro',        name: 'Litro',        container: 'Familiar', capacity: '1000 ml', scoops: 2, price: 70000, desc: '2 sabores (familiar)', emoji: '🧊' },
+  { id: 'vaso_pequeno', name: 'Vaso 4 oz',   container: 'Vaso',     capacity: '4 oz',   scoops: 1, price: 15000, desc: '1 sabor (4 oz)',      emoji: '🍨', image: '/images/products/vaso-4oz.webp' },
+  { id: 'vaso_grande',  name: 'Vaso 6 oz',   container: 'Vaso',     capacity: '6 oz',   scoops: 2, price: 21000, desc: '2 sabores (6 oz)',     emoji: '🍨', image: '/images/products/vaso-6oz.webp' },
+  { id: 'cono_pequeno', name: 'Cono 1 Sabor', container: 'Cono',    capacity: 'Cono',   scoops: 1, price: 15000, desc: '1 sabor en cono',      emoji: '🍦', image: '/images/products/cono-pequeno.webp' },
+  { id: 'cono_grande',  name: 'Cono 2 Sabores', container: 'Cono',  capacity: 'Cono',   scoops: 2, price: 21000, desc: '2 sabores en cono',    emoji: '🍦', image: '/images/products/cono-grande.webp' },
+  { id: 'litro',        name: 'Litro Familiar', container: 'Familiar', capacity: '1000 ml', scoops: 2, price: 70000, desc: '2 sabores (familiar)', emoji: '🧊', image: '/images/products/tarrina-litro.webp' },
 ];
 
 const QUICK_CASH_AMOUNTS = [15000, 20000, 21000, 50000, 100000];
@@ -312,7 +313,8 @@ export const POSPage: React.FC = () => {
   // Products filtering
   const gelatoFlavors = useMemo(() => {
     return products.filter(p => {
-      const isGelatoCat = p.categoryId === 1 || p.categoryId === 2 || p.categoryId === 3;
+      const catId = Number(p.categoryId || (p as any).category_id);
+      const isGelatoCat = catId === 1 || catId === 2 || catId === 3;
       if (!isGelatoCat) return false;
       if (searchQuery.trim()) {
         return (
@@ -327,7 +329,8 @@ export const POSPage: React.FC = () => {
   const otherProducts = useMemo(() => {
     if (typeof catalogTab !== 'number') return [];
     return products.filter(p => {
-      if (p.categoryId !== catalogTab) return false;
+      const catId = Number(p.categoryId || (p as any).category_id);
+      if (catId !== catalogTab) return false;
       if (searchQuery.trim()) {
         return p.name.toLowerCase().includes(searchQuery.toLowerCase());
       }
@@ -697,14 +700,16 @@ export const POSPage: React.FC = () => {
                         setFirstFlavor(null);
                       }}
                       className={cn(
-                        'flex items-center justify-between p-2 rounded-xl border transition-all text-left shadow-sm',
+                        'flex items-center justify-between p-1.5 sm:p-2 rounded-xl border transition-all text-left shadow-sm',
                         isSelected
                           ? 'bg-[#FAF8EA] border-[#364266] ring-2 ring-[#364266] font-bold scale-[1.01]'
                           : 'bg-white/90 border-gray-200 hover:border-[#C6BF81] hover:bg-white text-[#364266]'
                       )}
                     >
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-base">{fmt.emoji}</span>
+                      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-white/90 border border-[#364266]/10 flex items-center justify-center p-0.5 shrink-0 overflow-hidden shadow-xs">
+                          <img src={fmt.image} alt={fmt.name} className="max-h-full max-w-full object-contain" />
+                        </div>
                         <div className="leading-tight truncate">
                           <p className="font-sans font-bold text-[11px] text-[#242D49] truncate">
                             {fmt.name}
@@ -826,7 +831,7 @@ export const POSPage: React.FC = () => {
                       </button>
 
                       {/* Flavor Image */}
-                      <div className="w-full h-24 lg:h-28 flex items-center justify-center my-1">
+                      <div className="w-full h-20 lg:h-24 flex items-center justify-center my-1">
                         {flavor.image ? (
                           <img
                             src={flavor.image}
@@ -836,6 +841,21 @@ export const POSPage: React.FC = () => {
                         ) : (
                           <span className="text-4xl">🍨</span>
                         )}
+                      </div>
+
+                      {/* Presentation format badge */}
+                      <div className="mb-1">
+                        <span className={cn(
+                          "px-2 py-0.5 rounded-md text-[10px] font-bold inline-flex items-center gap-1",
+                          selectedFormat.container === 'Cono'
+                            ? "bg-amber-100 text-amber-900 border border-amber-300"
+                            : selectedFormat.id === 'litro'
+                            ? "bg-blue-100 text-blue-900 border border-blue-300"
+                            : "bg-[#FEF3DE] text-[#364266] border border-[#C6BF81]/40"
+                        )}>
+                          <span>{selectedFormat.emoji}</span>
+                          <span>{selectedFormat.name}</span>
+                        </span>
                       </div>
 
                       {/* Details */}

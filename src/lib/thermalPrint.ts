@@ -18,12 +18,12 @@ export function printThermal(htmlContent: string, title = 'Impresión POS'): Pro
       iframe.style.position = 'fixed';
       iframe.style.right = '0';
       iframe.style.bottom = '0';
-      iframe.style.width = '350px';
-      iframe.style.height = '350px';
-      iframe.style.border = '0';
-      iframe.style.opacity = '0.01';
-      iframe.style.pointerEvents = 'none';
+      iframe.style.width = '0px';
+      iframe.style.height = '0px';
+      iframe.style.border = 'none';
+      iframe.style.opacity = '0';
       iframe.style.zIndex = '-9999';
+      iframe.style.pointerEvents = 'none';
       document.body.appendChild(iframe);
 
       const frameDoc = iframe.contentWindow?.document;
@@ -41,6 +41,11 @@ export function printThermal(htmlContent: string, title = 'Impresión POS'): Pro
         try {
           iframe.contentWindow?.focus();
           iframe.contentWindow?.print();
+          setTimeout(() => {
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+          }, 2000);
           resolve(true);
         } catch (e) {
           console.warn('Iframe print failed, fallback to popup', e);
@@ -66,10 +71,10 @@ function fallbackPopupPrint(htmlContent: string, title: string) {
     win.document.close();
     win.focus();
     setTimeout(() => {
-      win.print();
+      try {
+        win.print();
+      } catch (e) {}
     }, 300);
-  } else {
-    window.print();
   }
 }
 
@@ -115,14 +120,15 @@ export function generateSalesTicketHtml(order: any, options: PrintOptions = {}):
         <title>Recibo ${docNumber}</title>
         <style>
           @page {
-            margin: 0;
-            size: auto;
+            margin: 0mm !important;
+            size: portrait;
           }
           @media print {
             html, body {
-              width: ${widthCss};
+              width: ${widthCss} !important;
+              max-width: ${widthCss} !important;
               margin: 0 auto !important;
-              padding: 1mm 0mm !important;
+              padding: 1mm 1mm !important;
               height: auto !important;
               min-height: 0 !important;
               overflow: visible !important;
@@ -264,12 +270,13 @@ export function generateZReportHtml(shiftData: any, options: PrintOptions & { is
         <title>Reporte Turno #${shiftId}</title>
         <style>
           @page {
-            margin: 0;
-            size: auto;
+            margin: 0mm !important;
+            size: portrait;
           }
           @media print {
             html, body {
-              width: ${widthCss};
+              width: ${widthCss} !important;
+              max-width: ${widthCss} !important;
               margin: 0 auto !important;
               padding: 1.5mm 0mm !important;
               height: auto !important;
