@@ -345,7 +345,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   updateOrderStatus: (id, status) => {
     set(s => ({ orders: s.orders.map(o => o.id === id ? { ...o, status } : o) }));
-    api.updateOrderStatus(id, status).catch(err => {
+    api.updateOrderStatus(id, status).then(() => {
+      get().refreshCurrentShift();
+    }).catch(err => {
       console.error('Error updating order status:', err);
       get().refreshOrders();
     });
@@ -353,7 +355,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   updatePaymentStatus: (id, paymentStatus, paymentMethod) => {
     set(s => ({ orders: s.orders.map(o => o.id === id ? { ...o, paymentStatus, ...(paymentMethod ? { paymentMethod } : {}) } : o) }));
-    api.updatePaymentStatus(id, paymentStatus, paymentMethod).catch(err => {
+    api.updatePaymentStatus(id, paymentStatus, paymentMethod).then(() => {
+      get().refreshCurrentShift();
+    }).catch(err => {
       console.error('Error updating payment status:', err);
       get().refreshOrders();
     });
@@ -388,7 +392,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   deleteOrder: (id) => {
     set(s => ({ orders: s.orders.filter(o => o.id !== id) }));
-    api.deleteOrder(id).catch(err => {
+    api.deleteOrder(id).then(() => {
+      get().refreshCurrentShift();
+    }).catch(err => {
       console.error('Error deleting order:', err);
       get().refreshOrders();
     });
@@ -396,7 +402,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   deleteOrders: (ids) => {
     set(s => ({ orders: s.orders.filter(o => !ids.includes(o.id)) }));
-    Promise.all(ids.map(id => api.deleteOrder(id))).catch(err => {
+    Promise.all(ids.map(id => api.deleteOrder(id))).then(() => {
+      get().refreshCurrentShift();
+    }).catch(err => {
       console.error('Error deleting orders:', err);
       get().refreshOrders();
     });
@@ -404,7 +412,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   updateOrdersStatus: (ids, status) => {
     set(s => ({ orders: s.orders.map(o => ids.includes(o.id) ? { ...o, status } : o) }));
-    Promise.all(ids.map(id => api.updateOrderStatus(id, status))).catch(err => {
+    Promise.all(ids.map(id => api.updateOrderStatus(id, status))).then(() => {
+      get().refreshCurrentShift();
+    }).catch(err => {
       console.error('Error updating orders status:', err);
       get().refreshOrders();
     });
@@ -519,5 +529,6 @@ export const useStore = create<AppState>((set, get) => ({
       }
       return { orders: [order, ...s.orders] };
     });
+    get().refreshCurrentShift();
   },
 }));

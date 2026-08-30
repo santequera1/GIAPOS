@@ -383,14 +383,50 @@ export const POSPage: React.FC = () => {
     setFirstFlavor(null);
   };
 
-  // Gelato pricing helper (handles special prices like Pistacho Sin Azúcar)
+  // Gelato pricing helper (handles proportional scoop pricing, e.g. Pistacho Sin Azúcar)
   const getGelatoItemPrice = (format: GelatoFormat, f1: Product, f2?: Product | null) => {
-    const isSpecialSA = f1.name.toLowerCase().includes('sin azúcar') || (f2 && f2.name.toLowerCase().includes('sin azúcar'));
-    if (isSpecialSA) {
-      if (format.id === 'vaso_pequeno' || format.id === 'cono_pequeno') return 17000;
-      if (format.id === 'vaso_grande' || format.id === 'cono_grande') return 23000;
-      if (format.id === 'litro') return 75000;
+    const isSA = (p?: Product | null) => {
+      if (!p) return false;
+      const lower = p.name.toLowerCase();
+      return lower.includes('sin azúcar') || lower.includes('sin azucar') || lower.includes('sa');
+    };
+
+    const f1IsSA = isSA(f1);
+    const f2IsSA = isSA(f2);
+
+    if (format.scoops === 1) {
+      if (f1IsSA) return 17000;
+      return format.price; // 15000
     }
+
+    // 2 Scoops formats (Vaso 6 oz / Cono 2 Sabores)
+    if (format.id === 'vaso_grande' || format.id === 'cono_grande') {
+      if (f1IsSA && f2IsSA) {
+        // Both scoops Sin Azúcar ($11.500 + $11.500) -> $23.000
+        return 23000;
+      }
+      if (f1IsSA || f2IsSA) {
+        // 1 scoop Normal ($10.500) + 1 scoop Sin Azúcar ($11.500) -> $22.000
+        return 22000;
+      }
+      // Both scoops Normal ($10.500 + $10.500) -> $21.000
+      return 21000;
+    }
+
+    // Litro Familiar format (2 sabores)
+    if (format.id === 'litro') {
+      if (f1IsSA && f2IsSA) {
+        // Both flavors Sin Azúcar ($37.500 + $37.500) -> $75.000
+        return 75000;
+      }
+      if (f1IsSA || f2IsSA) {
+        // 1 flavor Normal ($35.000) + 1 flavor Sin Azúcar ($37.500) -> $72.500
+        return 72500;
+      }
+      // Both flavors Normal ($35.000 + $35.000) -> $70.000
+      return 70000;
+    }
+
     return format.price;
   };
 
@@ -445,7 +481,7 @@ export const POSPage: React.FC = () => {
 
   const handleAddFirstFlavorSolo = () => {
     if (!firstFlavor) return;
-    const itemPrice = getGelatoItemPrice(selectedFormat, firstFlavor);
+    const itemPrice = getGelatoItemPrice(selectedFormat, firstFlavor, firstFlavor);
     const containerLabel = selectedFormat.container === 'Cono' ? 'Cono' : selectedFormat.container === 'Familiar' ? 'Litro Familiar' : 'Vaso';
     addItemToCart({
       productId: firstFlavor.id,
