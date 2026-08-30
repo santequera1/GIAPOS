@@ -439,15 +439,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               {/* Items List */}
               <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                 {cart.map((item, idx) => (
-                  <div key={idx} className="p-2 rounded-xl bg-[#FAF8EA]/60 border border-[#364266]/10 text-xs">
-                    <div className="flex justify-between items-start">
+                  <div key={idx} className="p-2.5 rounded-xl bg-[#FAF8EA] border border-[#364266]/10 text-xs space-y-1">
+                    <div className="flex justify-between items-start gap-2">
                       <span className="font-bold text-[#242D49]">
-                        {item.quantity}x {item.name}
+                        {item.quantity}x {item.size || item.name.replace(/—.*$/, '').trim()}
                       </span>
-                      <span className="font-bold text-[#344268]">{formatPrice(item.price * item.quantity)}</span>
+                      <span className="font-bold text-[#344268] shrink-0">{formatPrice(item.price * item.quantity)}</span>
                     </div>
                     {item.flavors && (
-                      <p className="text-[10px] text-[#6B5E4F] italic pl-2 mt-0.5">• {item.flavors}</p>
+                      <p className="text-[11px] text-[#6B5E4F] font-medium font-sans pl-1">
+                        🍨 {item.flavors.split(',').map(f => f.trim()).join(' + ')}
+                      </p>
                     )}
                   </div>
                 ))}

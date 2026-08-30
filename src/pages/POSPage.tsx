@@ -987,7 +987,7 @@ export const POSPage: React.FC = () => {
       </div>
 
       {/* RIGHT COLUMN: Live Cart & Fast Checkout Panel */}
-      <div className={cn('w-full lg:w-72 xl:w-80 bg-white flex-col h-full border-l border-[#364266]/10 shadow-xl shrink-0 font-sans', mobileView === 'cart' ? 'flex' : 'hidden lg:flex')}>
+      <div className={cn('w-full lg:w-80 xl:w-96 bg-white flex-col h-full border-l border-[#364266]/10 shadow-xl shrink-0 font-sans', mobileView === 'cart' ? 'flex' : 'hidden lg:flex')}>
         {/* Precuentas / Multi-tabs Bar */}
         <div className="p-2 bg-[#242D49] text-white flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
           <div className="flex items-center gap-1 shrink-0 text-xs font-bold text-[#C6BF81] pl-1 pr-2">
@@ -1162,55 +1162,71 @@ export const POSPage: React.FC = () => {
             cart.map((item, idx) => (
               <div
                 key={idx}
-                className="p-2.5 rounded-xl bg-[#FAF8EA]/70 border border-[#364266]/10 flex items-center justify-between gap-2 shadow-sm"
+                className="p-2.5 rounded-2xl bg-[#FAF8EA] border border-[#364266]/15 hover:border-[#364266]/30 transition-all shadow-xs space-y-1.5"
               >
-                <div className="flex-1 min-w-0">
-                  <p className="font-sans font-bold text-xs lg:text-sm text-[#242D49] truncate leading-tight">
-                    {item.name}
-                  </p>
-                  {item.flavors && (
-                    <p className="text-[11px] text-[#6B5E4F] font-sans truncate">
-                      {item.flavors}
-                    </p>
-                  )}
-                  <p className="text-xs font-sans font-bold text-[#344268] mt-0.5">
-                    {formatPrice(item.price)}
-                  </p>
+                {/* Row 1: Presentation / Product Name + Subtotal + Remove */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <span className="font-sans font-bold text-xs sm:text-sm text-[#242D49] leading-tight block">
+                      {item.size || item.name.replace(/—.*$/, '').trim()}
+                    </span>
+                    {item.size && item.name.includes('—') && (
+                      <span className="text-[10px] text-gray-500 font-sans block truncate">
+                        {item.name.replace(/^.*?—\s*/, '')}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="font-sans font-bold text-xs sm:text-sm text-[#344268]">
+                      {formatPrice(item.price * item.quantity)}
+                    </span>
+                    <button
+                      onClick={() => removeItem(idx)}
+                      className="text-gray-400 hover:text-red-500 p-0.5 rounded-md hover:bg-red-50 transition-colors"
+                      title="Eliminar producto"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Quantity Controls */}
-                <div className="flex items-center gap-1 shrink-0 bg-white rounded-lg p-0.5 border border-[#364266]/15 shadow-sm">
-                  <button
-                    onClick={() => updateQuantity(idx, -1)}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-gray-100 text-[#364266]"
-                  >
-                    <Minus size={12} />
-                  </button>
-                  <span className="w-6 text-center font-bold text-xs text-[#364266] font-sans">
-                    {item.quantity}
+                {/* Row 2: Flavors (FULL DISPLAY, NO TRUNCATION) */}
+                {item.flavors && (
+                  <div className="p-1.5 rounded-xl bg-white border border-[#C6BF81]/40 text-xs font-semibold text-[#364266] flex items-center gap-1.5">
+                    <span className="text-xs shrink-0">🍨</span>
+                    <span className="leading-snug break-words flex-1 font-sans">
+                      {item.flavors.split(',').map(f => f.trim()).join('  +  ')}
+                    </span>
+                  </div>
+                )}
+
+                {/* Row 3: Unit Price & Quantity Stepper */}
+                <div className="flex items-center justify-between pt-1 border-t border-gray-200/60">
+                  <span className="text-[11px] text-[#897863] font-medium font-sans">
+                    {formatPrice(item.price)} c/u
                   </span>
-                  <button
-                    onClick={() => updateQuantity(idx, 1)}
-                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-gray-100 text-[#364266]"
-                  >
-                    <Plus size={12} />
-                  </button>
-                </div>
 
-                {/* Subtotal */}
-                <div className="text-right shrink-0 min-w-[65px]">
-                  <p className="font-sans font-bold text-xs text-[#364266]">
-                    {formatPrice(item.price * item.quantity)}
-                  </p>
+                  <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-[#364266]/20 shadow-xs">
+                    <button
+                      onClick={() => updateQuantity(idx, -1)}
+                      className="w-5 h-5 rounded flex items-center justify-center hover:bg-gray-100 text-[#364266] active:scale-95 transition-transform"
+                      title="Restar 1"
+                    >
+                      <Minus size={11} />
+                    </button>
+                    <span className="w-5 text-center font-bold text-xs text-[#364266] font-sans">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => updateQuantity(idx, 1)}
+                      className="w-5 h-5 rounded flex items-center justify-center hover:bg-gray-100 text-[#364266] active:scale-95 transition-transform"
+                      title="Sumar 1"
+                    >
+                      <Plus size={11} />
+                    </button>
+                  </div>
                 </div>
-
-                {/* Remove */}
-                <button
-                  onClick={() => removeItem(idx)}
-                  className="text-gray-400 hover:text-red-500 p-1"
-                >
-                  <X size={14} />
-                </button>
               </div>
             ))
           )}
