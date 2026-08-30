@@ -547,22 +547,7 @@ export const POSPage: React.FC = () => {
       const newId = await addOrder(orderPayload);
 
       if (newId > 0) {
-        const completedOrder = {
-          ...orderPayload,
-          id: newId,
-          createdAt: new Date().toISOString(),
-        };
-
-        setLastOrder(completedOrder);
         setShowCheckoutModal(false);
-
-        // Auto-print thermal ticket immediately!
-        try {
-          const html = generateSalesTicketHtml(completedOrder, { paperSize: '80mm' });
-          printThermal(html, `Factura-GIA-${newId}`);
-        } catch (printErr) {
-          console.error('Error in auto thermal print:', printErr);
-        }
 
         // Remove or reset completed tab
         if (tabs.length > 1) {
@@ -574,7 +559,7 @@ export const POSPage: React.FC = () => {
         }
 
         setMobileView('catalog');
-        toast.success(`¡Venta #${newId} completada e impresa!`);
+        toast.success(`¡Venta #${newId} registrada con éxito!`);
       } else {
         toast.error('No se pudo procesar la venta. Intenta nuevamente.');
       }
