@@ -45,11 +45,11 @@ export interface GelatoFormat {
 }
 
 const GELATO_FORMATS: GelatoFormat[] = [
-  { id: 'vaso_pequeno', name: 'Vaso 4 oz',   container: 'Vaso',     capacity: '4 oz',   scoops: 1, price: 15000, desc: '1 sabor (4 oz)',      emoji: '🍨', image: '/images/products/vaso-4oz.webp' },
+  { id: 'vaso_pequeno', name: 'Vaso 4 oz',   container: 'Vaso',     capacity: '4 oz',   scoops: 1, price: 15000, desc: '1 sabor (4 oz)',      emoji: '🍨', image: '/images/products/vaso-pequeno.png' },
   { id: 'vaso_grande',  name: 'Vaso 6 oz',   container: 'Vaso',     capacity: '6 oz',   scoops: 2, price: 21000, desc: '2 sabores (6 oz)',     emoji: '🍨', image: '/images/products/vaso-6oz.webp' },
   { id: 'cono_pequeno', name: 'Cono 1 Sabor', container: 'Cono',    capacity: 'Cono',   scoops: 1, price: 15000, desc: '1 sabor en cono',      emoji: '🍦', image: '/images/products/cono-pequeno.webp' },
   { id: 'cono_grande',  name: 'Cono 2 Sabores', container: 'Cono',  capacity: 'Cono',   scoops: 2, price: 21000, desc: '2 sabores en cono',    emoji: '🍦', image: '/images/products/cono-grande.webp' },
-  { id: 'litro',        name: 'Litro Familiar', container: 'Familiar', capacity: '1000 ml', scoops: 2, price: 70000, desc: '2 sabores (familiar)', emoji: '🧊', image: '/images/products/tarrina-litro.webp' },
+  { id: 'litro',        name: 'Litro Familiar', container: 'Familiar', capacity: '1000 ml', scoops: 2, price: 70000, desc: '2 sabores (familiar)', emoji: '🧊', image: '/images/products/helado-litro.png' },
 ];
 
 const QUICK_CASH_AMOUNTS = [15000, 20000, 21000, 50000, 100000];
@@ -277,6 +277,7 @@ export const POSPage: React.FC = () => {
   const [custSearchQuery, setCustSearchQuery] = useState('');
 
   const [customItem, setCustomItem] = useState({ name: '', price: '' });
+  const [affogatoModalProd, setAffogatoModalProd] = useState<Product | null>(null);
   const [lastOrder, setLastOrder] = useState<any | null>(null);
   const [countdown, setCountdown] = useState<number>(3);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -501,6 +502,26 @@ export const POSPage: React.FC = () => {
       toast.error(`${prod.name} no está disponible`);
       return;
     }
+
+    if (prod.name.toLowerCase().includes('affogato clásico') || prod.name === 'Affogato Clásico' || (prod.category_id === 6 && !prod.name.toLowerCase().includes('sin azúcar'))) {
+      setAffogatoModalProd(prod);
+      return;
+    }
+
+    if (prod.name.toLowerCase().includes('affogato pistacho sin azúcar')) {
+      addItemToCart({
+        productId: prod.id,
+        name: 'Affogato Pistacho Sin Azúcar',
+        size: 'Affogato Pistacho SA',
+        flavors: 'Pistacho Sin Azúcar',
+        quantity: 1,
+        price: prod.price || 22000,
+        notes: '',
+      });
+      toast.success('Agregado: Affogato Pistacho Sin Azúcar');
+      return;
+    }
+
     addItemToCart({
       productId: prod.id,
       name: prod.name,
@@ -701,7 +722,7 @@ export const POSPage: React.FC = () => {
                 )}
               >
                 <span>{cat.emoji}</span>
-                <span>{cat.name}</span>
+                <span>{cat.id === 4 ? 'Bebidas' : cat.id === 5 ? 'Toppings' : cat.name}</span>
               </button>
             ))}
 
@@ -939,7 +960,7 @@ export const POSPage: React.FC = () => {
             </div>
           )}
 
-          {/* Other Categories Grid (Affogatos, Bebidas & Aguas, Adicionales) */}
+          {/* Other Categories Grid (Affogatos, Bebidas, Toppings) */}
           {typeof catalogTab === 'number' && (
             <div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-2.5">
@@ -948,13 +969,13 @@ export const POSPage: React.FC = () => {
                     key={prod.id}
                     onClick={() => handleAddOtherProduct(prod)}
                     className={cn(
-                      'p-3.5 rounded-2xl bg-white border border-[#364266]/10 hover:border-[#C6BF81] hover:shadow-md cursor-pointer transition-all flex flex-col justify-between shadow-sm',
+                      'p-3.5 rounded-2xl bg-white border border-[#364266]/10 hover:border-[#C6BF81] hover:shadow-md cursor-pointer transition-all flex flex-col justify-between shadow-sm group',
                       !prod.available && 'opacity-50 grayscale'
                     )}
                   >
                     <div>
                       <div className="flex justify-between items-start">
-                        <h3 className="font-sans font-bold text-[#364266] text-base">{prod.name}</h3>
+                        <h3 className="font-sans font-bold text-[#364266] text-sm lg:text-base leading-tight">{prod.name}</h3>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -965,12 +986,24 @@ export const POSPage: React.FC = () => {
                           {prod.available ? <Eye size={14} className="text-emerald-600" /> : <EyeOff size={14} className="text-red-500" />}
                         </button>
                       </div>
-                      <p className="font-sans text-xs text-[#897863] not-italic my-1">{prod.description || 'Producto Gia'}</p>
+
+                      {/* Product Image */}
+                      {prod.image && (
+                        <div className="w-full h-20 lg:h-24 flex items-center justify-center my-1.5">
+                          <img
+                            src={prod.image}
+                            alt={prod.name}
+                            className="max-h-full max-w-full object-contain drop-shadow-md transition-transform group-hover:scale-105"
+                          />
+                        </div>
+                      )}
+
+                      <p className="font-sans text-xs text-[#897863] not-italic my-1 line-clamp-2">{prod.description || 'Producto Gia'}</p>
                     </div>
 
-                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
-                      <span className="font-sans font-bold text-base text-[#344268]">{formatPrice(prod.price)}</span>
-                      <span className="w-8 h-8 rounded-full bg-[#364266] text-[#FEF3DE] flex items-center justify-center text-sm font-bold shadow-sm">
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                      <span className="font-sans font-bold text-sm lg:text-base text-[#344268]">{formatPrice(prod.price)}</span>
+                      <span className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-[#364266] text-[#FEF3DE] flex items-center justify-center text-sm font-bold shadow-sm group-hover:scale-105 transition-transform">
                         +
                       </span>
                     </div>
@@ -1556,6 +1589,76 @@ export const POSPage: React.FC = () => {
                 >
                   Guardar Nombre
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Affogato Flavor Selection Modal */}
+      <AnimatePresence>
+        {affogatoModalProd && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 font-sans">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl border border-[#364266]/10 space-y-4"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-[#FAF8EA] border border-[#C6BF81]/50 flex items-center justify-center text-xl">
+                    ☕
+                  </div>
+                  <div>
+                    <h3 className="font-sans font-bold text-lg text-[#364266]">
+                      {affogatoModalProd.name} ({formatPrice(affogatoModalProd.price)})
+                    </h3>
+                    <p className="text-xs text-[#897863]">
+                      Selecciona el sabor de gelato para preparar el Affogato con espresso caliente:
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setAffogatoModalProd(null)}
+                  className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-[60vh] overflow-y-auto pr-1">
+                {gelatoFlavors.filter(f => f.available).map((flavor) => (
+                  <button
+                    key={flavor.id}
+                    onClick={() => {
+                      addItemToCart({
+                        productId: affogatoModalProd.id,
+                        name: `${affogatoModalProd.name} — ${flavor.name}`,
+                        size: 'Affogato Clásico',
+                        flavors: flavor.name,
+                        quantity: 1,
+                        price: affogatoModalProd.price || 21000,
+                        notes: '',
+                      });
+                      toast.success(`Agregado: ${affogatoModalProd.name} (${flavor.name})`);
+                      setAffogatoModalProd(null);
+                    }}
+                    className="p-3 rounded-2xl border border-gray-200 hover:border-[#364266] hover:shadow-md transition-all flex flex-col items-center justify-between text-center gap-1.5 active:scale-95 shadow-xs cursor-pointer"
+                    style={{ backgroundColor: flavor.color_bg || '#FAF8EA' }}
+                  >
+                    <div className="w-12 h-12 flex items-center justify-center">
+                      {flavor.image ? (
+                        <img src={flavor.image} alt={flavor.name} className="max-h-full max-w-full object-contain" />
+                      ) : (
+                        <span className="text-2xl">🍨</span>
+                      )}
+                    </div>
+                    <span className="font-sans font-bold text-xs text-[#242D49] leading-tight">
+                      {flavor.name}
+                    </span>
+                  </button>
+                ))}
               </div>
             </motion.div>
           </div>
