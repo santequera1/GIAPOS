@@ -76,8 +76,8 @@ function initSchema() {
       delivery_fee INTEGER NOT NULL DEFAULT 0,
       discount INTEGER NOT NULL DEFAULT 0,
       total INTEGER NOT NULL,
-      payment_method TEXT NOT NULL CHECK(payment_method IN ('cash', 'card_debit', 'card_credit', 'card', 'transfer')),
-      payment_status TEXT NOT NULL DEFAULT 'paid' CHECK(payment_status IN ('pending', 'paid')),
+      payment_method TEXT NOT NULL,
+      payment_status TEXT NOT NULL DEFAULT 'paid',
       cash_received INTEGER DEFAULT 0,
       cash_change INTEGER DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now', '-5 hours')),
@@ -179,6 +179,76 @@ function migrateSchema() {
   addCol('orders', 'notes', "TEXT DEFAULT ''");
   addCol('orders', 'receipt_image', "TEXT");
   addCol('orders', 'payment_split', "TEXT");
+
+  // Migration: Ensure orders table has no restrictive CHECK constraint on payment_method
+  try {
+    const ordersTableSql = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='orders'").get();
+    if (ordersTableSql && ordersTableSql.sql && ordersTableSql.sql.includes("CHECK(payment_method IN") && !ordersTableSql.sql.includes("'mixed'")) {
+      console.log('🔄 Migrating orders table to support mixed payments...');
+      db.exec(`
+        PRAGMA foreign_keys=off;
+        BEGIN TRANSACTION;
+        CREATE TABLE orders_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          type TEXT NOT NULL DEFAULT 'pickup',
+          status TEXT NOT NULL DEFAULT 'delivered',
+          customer_name TEXT NOT NULL DEFAULT 'Consumidor Final',
+          customer_doc TEXT DEFAULT '222222222222',
+          customer_email TEXT DEFAULT '',
+          customer_phone TEXT DEFAULT '',
+          customer_address TEXT DEFAULT '',
+          customer_id INTEGER,
+          is_electronic_invoice INTEGER DEFAULT 0,
+          table_number INTEGER,
+          subtotal INTEGER NOT NULL,
+          delivery_fee INTEGER NOT NULL DEFAULT 0,
+          discount INTEGER NOT NULL DEFAULT 0,
+          total INTEGER NOT NULL,
+          payment_method TEXT NOT NULL,
+          payment_status TEXT NOT NULL DEFAULT 'paid',
+          cash_received INTEGER DEFAULT 0,
+          cash_change INTEGER DEFAULT 0,
+          payment_split TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now', '-5 hours')),
+          driver_id INTEGER,
+          receipt_image TEXT,
+          notes TEXT DEFAULT '',
+          shift_id INTEGER
+        );
+        INSERT INTO orders_new (
+          id, type, status, customer_name, customer_doc, customer_email, customer_phone, customer_address,
+          customer_id, is_electronic_invoice, table_number, subtotal, delivery_fee, discount, total,
+          payment_method, payment_status, cash_received, cash_change, payment_split, created_at,
+          driver_id, receipt_image, notes, shift_id
+        ) SELECT 
+          id, type, status, customer_name,
+          COALESCE(customer_doc, '222222222222'),
+          COALESCE(customer_email, ''),
+          COALESCE(customer_phone, ''),
+          COALESCE(customer_address, ''),
+          customer_id,
+          COALESCE(is_electronic_invoice, 0),
+          table_number, subtotal,
+          COALESCE(delivery_fee, 0),
+          COALESCE(discount, 0),
+          total, payment_method,
+          COALESCE(payment_status, 'paid'),
+          COALESCE(cash_received, 0),
+          COALESCE(cash_change, 0),
+          payment_split, created_at, driver_id, receipt_image,
+          COALESCE(notes, ''),
+          shift_id
+        FROM orders;
+        DROP TABLE orders;
+        ALTER TABLE orders_new RENAME TO orders;
+        COMMIT;
+        PRAGMA foreign_keys=on;
+      `);
+      console.log('✅ orders table migrated successfully for mixed payments!');
+    }
+  } catch (migErr) {
+    console.error('Error migrating orders table for mixed payment:', migErr);
+  }
 
   addCol('order_items', 'size', "TEXT");
   addCol('order_items', 'flavors', "TEXT");

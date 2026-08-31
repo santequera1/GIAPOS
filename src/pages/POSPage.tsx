@@ -546,7 +546,9 @@ export const POSPage: React.FC = () => {
     }
 
     if (paymentMethod === 'mixed') {
-      const sum = (paymentSplit?.amount1 || 0) + (paymentSplit?.amount2 || 0);
+      const half = Math.round(total / 2);
+      const split = paymentSplit || { method1: 'cash', amount1: half, method2: 'card_debit', amount2: total - half };
+      const sum = Number(split.amount1 || 0) + Number(split.amount2 || 0);
       if (sum !== total) {
         toast.error(`La suma de los métodos de pago (${formatPrice(sum)}) debe ser igual al total (${formatPrice(total)})`);
         return;
@@ -556,6 +558,11 @@ export const POSPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      const half = Math.round(total / 2);
+      const finalSplit = paymentMethod === 'mixed'
+        ? (paymentSplit || { method1: 'cash', amount1: half, method2: 'card_debit', amount2: total - half })
+        : undefined;
+
       const orderPayload = {
         type: 'pickup' as const,
         status: 'delivered' as const,
@@ -572,9 +579,13 @@ export const POSPage: React.FC = () => {
         discount: discountAmount,
         total,
         paymentMethod,
-        paymentSplit: paymentMethod === 'mixed' ? paymentSplit : undefined,
+        paymentSplit: finalSplit,
         paymentStatus: 'paid' as const,
-        cashReceived: paymentMethod === 'cash' ? (numericCash || total) : paymentMethod === 'mixed' && paymentSplit.method1 === 'cash' ? paymentSplit.amount1 : 0,
+        cashReceived: paymentMethod === 'cash'
+          ? (numericCash || total)
+          : paymentMethod === 'mixed'
+            ? (finalSplit?.method1 === 'cash' ? Number(finalSplit.amount1) : finalSplit?.method2 === 'cash' ? Number(finalSplit.amount2) : 0)
+            : 0,
         cashChange: paymentMethod === 'cash' ? Math.max(0, change) : 0,
         notes: orderNotes,
         shiftId: currentShift?.id || undefined,

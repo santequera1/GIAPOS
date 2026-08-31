@@ -372,6 +372,11 @@ export const CashShiftPage: React.FC = () => {
                   Cuadrar Exacto
                 </button>
               </div>
+              {countedCash > 0 && (
+                <p className="text-xs font-bold text-emerald-700 mt-1 font-mono">
+                  = {formatPrice(countedCash)}
+                </p>
+              )}
             </div>
 
             {/* Difference Box */}
@@ -609,7 +614,26 @@ export const CashShiftPage: React.FC = () => {
 
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="font-bold text-[#364266]">Monto a Retirar (COP) *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-[#364266]">Monto a Retirar (COP) *</label>
+                    <div className="flex gap-1">
+                      {['10000', '20000', '50000', '100000'].map((amt) => (
+                        <button
+                          key={amt}
+                          type="button"
+                          onClick={() => setWithdrawalAmount(amt)}
+                          className={cn(
+                            "px-2 py-0.5 rounded-lg border text-[10px] font-bold transition-all",
+                            withdrawalAmount === amt
+                              ? "bg-[#242D49] text-[#FEF3DE] border-[#242D49]"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          )}
+                        >
+                          {formatPrice(Number(amt))}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <input
                     type="number"
                     value={withdrawalAmount}
@@ -617,6 +641,11 @@ export const CashShiftPage: React.FC = () => {
                     placeholder="Ej. 20000"
                     className="w-full mt-1 p-2.5 rounded-xl border border-gray-200 text-base font-bold text-red-700 focus:ring-2 focus:ring-red-400"
                   />
+                  {Number(withdrawalAmount) > 0 && (
+                    <p className="text-xs font-bold text-red-600 mt-1 font-mono">
+                      = {formatPrice(Number(withdrawalAmount))}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -681,14 +710,38 @@ export const CashShiftPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="font-bold text-[#364266]">Base Inicial en Efectivo (COP)</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-[#364266]">Base Inicial en Efectivo (COP)</label>
+                    <div className="flex gap-1 overflow-x-auto">
+                      {['100000', '200000', '300000', '400000', '500000'].map((amt) => (
+                        <button
+                          key={amt}
+                          type="button"
+                          onClick={() => setInitialBaseInput(amt)}
+                          className={cn(
+                            "px-2 py-0.5 rounded-lg border text-[10px] font-bold transition-all",
+                            initialBaseInput === amt
+                              ? "bg-[#242D49] text-[#FEF3DE] border-[#242D49]"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          )}
+                        >
+                          {formatPrice(Number(amt))}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <input
                     type="number"
                     value={initialBaseInput}
                     onChange={(e) => setInitialBaseInput(e.target.value)}
                     placeholder="100000"
-                    className="w-full mt-1 p-2.5 rounded-xl border border-gray-200 text-base font-bold"
+                    className="w-full mt-1 p-2.5 rounded-xl border border-gray-200 text-base font-bold text-[#364266]"
                   />
+                  {Number(initialBaseInput) > 0 && (
+                    <p className="text-xs font-bold text-emerald-700 mt-1 font-mono">
+                      = {formatPrice(Number(initialBaseInput))}
+                    </p>
+                  )}
                 </div>
               </div>
 

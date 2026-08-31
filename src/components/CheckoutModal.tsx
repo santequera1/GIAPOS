@@ -181,7 +181,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </button>
 
                 <button
-                  onClick={() => onUpdateTab({ paymentMethod: 'mixed' })}
+                  onClick={() => {
+                    const half = Math.round(total / 2);
+                    const currentSplit = paymentSplit || { method1: 'cash', amount1: half, method2: 'card_debit', amount2: total - half };
+                    const validSplit = (currentSplit.amount1 + currentSplit.amount2 === total && currentSplit.amount1 > 0)
+                      ? currentSplit
+                      : { method1: currentSplit.method1 || 'cash', amount1: half, method2: currentSplit.method2 || 'card_debit', amount2: total - half };
+                    onUpdateTab({
+                      paymentMethod: 'mixed',
+                      paymentSplit: validSplit,
+                    });
+                  }}
                   className={cn(
                     'py-3 px-2 rounded-2xl text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all',
                     paymentMethod === 'mixed'
@@ -202,20 +212,37 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <span className="text-xs font-bold text-[#364266]">Billetes Rápidos:</span>
                   <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                     <button
+                      type="button"
                       onClick={() => onUpdateTab({ cashReceived: String(total) })}
-                      className="px-2.5 py-1 rounded-xl bg-gray-100 hover:bg-[#FAF8EA] border border-gray-200 text-xs font-bold text-[#364266] shadow-xs"
+                      className={cn(
+                        'px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs flex items-center gap-1',
+                        numericCash === total && cashReceived === String(total)
+                          ? 'bg-[#242D49] text-[#FEF3DE] border-[#242D49] ring-2 ring-[#C6BF81] font-extrabold shadow-md scale-105'
+                          : 'bg-white text-[#364266] border-gray-200 hover:bg-[#FAF8EA]'
+                      )}
                     >
+                      {numericCash === total && cashReceived === String(total) && <span>✓</span>}
                       Exacto ({formatPrice(total)})
                     </button>
-                    {QUICK_CASH_AMOUNTS.map((amt) => (
-                      <button
-                        key={amt}
-                        onClick={() => onUpdateTab({ cashReceived: String(amt) })}
-                        className="px-2.5 py-1 rounded-xl bg-gray-100 hover:bg-[#FAF8EA] border border-gray-200 text-xs font-bold text-[#364266] shadow-xs"
-                      >
-                        {formatPrice(amt)}
-                      </button>
-                    ))}
+                    {QUICK_CASH_AMOUNTS.map((amt) => {
+                      const isSelected = numericCash === amt;
+                      return (
+                        <button
+                          key={amt}
+                          type="button"
+                          onClick={() => onUpdateTab({ cashReceived: String(amt) })}
+                          className={cn(
+                            'px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs flex items-center gap-1',
+                            isSelected
+                              ? 'bg-[#242D49] text-[#FEF3DE] border-[#242D49] ring-2 ring-[#C6BF81] font-extrabold shadow-md scale-105'
+                              : 'bg-white text-[#364266] border-gray-200 hover:bg-[#FAF8EA]'
+                          )}
+                        >
+                          {isSelected && <span>✓</span>}
+                          {formatPrice(amt)}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -229,6 +256,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       placeholder={String(total)}
                       className="w-full p-2.5 text-base font-bold bg-[#FAF8EA] rounded-xl border border-[#364266]/20 focus:ring-2 focus:ring-[#364266] outline-none"
                     />
+                    {numericCash > 0 && (
+                      <p className="text-xs font-bold text-emerald-700 mt-1 font-mono">
+                        = {formatPrice(numericCash)}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -255,7 +287,26 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <span className="flex items-center gap-1.5">
                     <Shuffle size={15} className="text-[#C6BF81]" /> Desglose de Pago Combinado
                   </span>
-                  <span className="text-[#242D49] font-extrabold text-sm">{formatPrice(total)}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const half = Math.round(total / 2);
+                        onUpdateTab({
+                          paymentSplit: {
+                            method1: paymentSplit?.method1 || 'cash',
+                            amount1: half,
+                            method2: paymentSplit?.method2 || 'card_debit',
+                            amount2: total - half,
+                          },
+                        });
+                      }}
+                      className="px-2 py-0.5 rounded-lg bg-[#FAF8EA] hover:bg-[#EFEDD8] border border-[#C6BF81]/50 text-[11px] font-bold text-[#364266]"
+                    >
+                      Dividir 50% / 50%
+                    </button>
+                    <span className="text-[#242D49] font-extrabold text-sm">{formatPrice(total)}</span>
+                  </div>
                 </div>
 
                 {/* Method 1 */}
@@ -263,10 +314,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <div>
                     <label className="text-[10px] text-[#897863] font-bold block mb-1">1er Método</label>
                     <select
-                      value={paymentSplit.method1}
+                      value={paymentSplit?.method1 || 'cash'}
                       onChange={(e) =>
                         onUpdateTab({
-                          paymentSplit: { ...paymentSplit, method1: e.target.value as PaymentMethod },
+                          paymentSplit: {
+                            method1: e.target.value as PaymentMethod,
+                            amount1: paymentSplit?.amount1 || Math.round(total / 2),
+                            method2: paymentSplit?.method2 || 'card_debit',
+                            amount2: paymentSplit?.amount2 || (total - Math.round(total / 2)),
+                          },
                         })
                       }
                       className="w-full p-2 rounded-xl border border-gray-200 bg-[#FAF8EA] text-xs font-semibold"
@@ -278,20 +334,30 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="text-[10px] text-[#897863] font-bold block mb-1">Monto 1</label>
+                    <label className="text-[10px] text-[#897863] font-bold block mb-1">Monto 1 (COP)</label>
                     <input
                       type="number"
-                      value={paymentSplit.amount1 || ''}
+                      value={paymentSplit?.amount1 !== undefined ? paymentSplit.amount1 : ''}
                       onChange={(e) => {
                         const a1 = Number(e.target.value) || 0;
                         const a2 = Math.max(0, total - a1);
                         onUpdateTab({
-                          paymentSplit: { ...paymentSplit, amount1: a1, amount2: a2 },
+                          paymentSplit: {
+                            method1: paymentSplit?.method1 || 'cash',
+                            amount1: a1,
+                            method2: paymentSplit?.method2 || 'card_debit',
+                            amount2: a2,
+                          },
                         });
                       }}
                       placeholder="0"
                       className="w-full p-2 text-xs font-bold rounded-xl border border-gray-200 bg-[#FAF8EA]"
                     />
+                    {Number(paymentSplit?.amount1) > 0 && (
+                      <p className="text-[10px] font-bold text-emerald-700 mt-0.5 font-mono">
+                        = {formatPrice(Number(paymentSplit?.amount1))}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -300,10 +366,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <div>
                     <label className="text-[10px] text-[#897863] font-bold block mb-1">2do Método</label>
                     <select
-                      value={paymentSplit.method2}
+                      value={paymentSplit?.method2 || 'card_debit'}
                       onChange={(e) =>
                         onUpdateTab({
-                          paymentSplit: { ...paymentSplit, method2: e.target.value as PaymentMethod },
+                          paymentSplit: {
+                            method1: paymentSplit?.method1 || 'cash',
+                            amount1: paymentSplit?.amount1 || Math.round(total / 2),
+                            method2: e.target.value as PaymentMethod,
+                            amount2: paymentSplit?.amount2 || (total - Math.round(total / 2)),
+                          },
                         })
                       }
                       className="w-full p-2 rounded-xl border border-gray-200 bg-[#FAF8EA] text-xs font-semibold"
@@ -318,17 +389,27 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     <label className="text-[10px] text-[#897863] font-bold block mb-1">Monto 2 (Restante)</label>
                     <input
                       type="number"
-                      value={paymentSplit.amount2 || ''}
+                      value={paymentSplit?.amount2 !== undefined ? paymentSplit.amount2 : ''}
                       onChange={(e) => {
                         const a2 = Number(e.target.value) || 0;
                         const a1 = Math.max(0, total - a2);
                         onUpdateTab({
-                          paymentSplit: { ...paymentSplit, amount1: a1, amount2: a2 },
+                          paymentSplit: {
+                            method1: paymentSplit?.method1 || 'cash',
+                            amount1: a1,
+                            method2: paymentSplit?.method2 || 'card_debit',
+                            amount2: a2,
+                          },
                         });
                       }}
                       placeholder="0"
                       className="w-full p-2 text-xs font-bold rounded-xl border border-gray-200 bg-[#FAF8EA]"
                     />
+                    {Number(paymentSplit?.amount2) > 0 && (
+                      <p className="text-[10px] font-bold text-emerald-700 mt-0.5 font-mono">
+                        = {formatPrice(Number(paymentSplit?.amount2))}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
