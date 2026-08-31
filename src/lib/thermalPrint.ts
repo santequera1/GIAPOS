@@ -196,8 +196,8 @@ export function generateZReportHtml(shiftData: any, options: PrintOptions & { is
       <div style="font-size: 8.5px;">
         <p class="font-bold" style="font-size: 8px; text-decoration: underline; margin-bottom: 2px;">VENTAS POR MEDIO DE PAGO:</p>
         <div class="row"><span>Ventas Efectivo:</span><span class="font-bold" style="white-space: nowrap;">+${formatPrice(cash)}</span></div>
-        <div class="row"><span>Ventas T. Débito:</span><span style="white-space: nowrap;">${formatPrice(debit)}</span></div>
-        <div class="row"><span>Ventas T. Crédito:</span><span style="white-space: nowrap;">${formatPrice(credit)}</span></div>
+        <div class="row font-bold"><span>Total Datáfono (Tarjetas):</span><span style="white-space: nowrap;">${formatPrice(debit + credit)}</span></div>
+        <div class="row" style="font-size: 7.5px; color: #333; padding-left: 6px;"><span>↳ Débito: ${formatPrice(debit)} | Crédito: ${formatPrice(credit)}</span></div>
         <div class="row"><span>Ventas QR / Nequi:</span><span style="white-space: nowrap;">${formatPrice(transfer)}</span></div>
         <div class="row font-bold" style="font-size: 9.5px; margin-top: 3px; border-top: 1px solid #000; padding-top: 2px;">
           <span>TOTAL VENTAS:</span>

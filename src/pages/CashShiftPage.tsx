@@ -261,31 +261,23 @@ export const CashShiftPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Tarjeta Débito */}
-          <div className="p-4 rounded-2xl bg-white border border-[#364266]/10 shadow-sm flex flex-col justify-between">
+          {/* Datáfono / Tarjetas (Débito + Crédito Unificado) */}
+          <div className="p-4 rounded-2xl bg-white border border-[#364266]/10 shadow-sm flex flex-col justify-between sm:col-span-2 lg:col-span-2">
             <div className="flex items-center justify-between text-[#897863]">
-              <span className="text-[11px] font-bold uppercase tracking-wider">T. Débito</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#364266] flex items-center gap-1">
+                💳 Datáfono / Tarjetas
+              </span>
               <CreditCard size={16} className="text-blue-600" />
             </div>
             <div className="mt-2">
-              <p className="text-base lg:text-lg font-bold font-serif text-[#364266]">
-                {formatPrice(currentShift.debitSales)}
+              <p className="text-base lg:text-lg font-bold font-serif text-[#242D49]">
+                {formatPrice((currentShift.debitSales || 0) + (currentShift.creditSales || 0))}
               </p>
-              <p className="text-[10px] text-[#897863] mt-0.5">Datáfono Débito</p>
-            </div>
-          </div>
-
-          {/* Tarjeta Crédito */}
-          <div className="p-4 rounded-2xl bg-white border border-[#364266]/10 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between text-[#897863]">
-              <span className="text-[11px] font-bold uppercase tracking-wider">T. Crédito</span>
-              <CreditCard size={16} className="text-indigo-600" />
-            </div>
-            <div className="mt-2">
-              <p className="text-base lg:text-lg font-bold font-serif text-[#364266]">
-                {formatPrice(currentShift.creditSales)}
-              </p>
-              <p className="text-[10px] text-[#897863] mt-0.5">Datáfono Crédito</p>
+              <div className="flex items-center gap-2 text-[10px] text-[#897863] mt-0.5 font-medium">
+                <span>Débito: {formatPrice(currentShift.debitSales || 0)}</span>
+                <span>•</span>
+                <span>Crédito: {formatPrice(currentShift.creditSales || 0)}</span>
+              </div>
             </div>
           </div>
 

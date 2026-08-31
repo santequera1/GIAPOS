@@ -833,6 +833,8 @@ export const POSPage: React.FC = () => {
                   const isFirstSelected = firstFlavor?.id === flavor.id;
                   const bgColor = flavor.color_bg || '#FAF8EA';
                   const isSinAzucar = flavor.name.toLowerCase().includes('sin azúcar');
+                  const isQuesoBocadillo = flavor.name.toLowerCase().includes('queso') && flavor.name.toLowerCase().includes('bocadillo');
+                  const isAmarenas = flavor.name.toLowerCase().includes('amarena');
 
                   return (
                     <div
@@ -843,9 +845,11 @@ export const POSPage: React.FC = () => {
                         flavor.available
                           ? 'hover:shadow-md hover:scale-[1.02] active:scale-[0.98]'
                           : 'opacity-50 grayscale cursor-not-allowed',
+                        isQuesoBocadillo && 'border-2 border-[#B9382F]/40 bg-[#FFF5F2]',
+                        isAmarenas && 'border-2 border-[#8B1E3F]/40 bg-[#FDF2F4]',
                         isFirstSelected && 'ring-4 ring-[#364266] shadow-lg scale-[1.03]'
                       )}
-                      style={{ backgroundColor: bgColor }}
+                      style={{ backgroundColor: isQuesoBocadillo ? '#FFF5F2' : isAmarenas ? '#FDF2F4' : bgColor }}
                     >
                       {/* Availability Quick Toggle */}
                       <button
@@ -869,10 +873,13 @@ export const POSPage: React.FC = () => {
                           <img
                             src={flavor.image}
                             alt={flavor.name}
-                            className="max-h-full max-w-full object-contain drop-shadow-md transition-transform hover:scale-105"
+                            className={cn(
+                              "max-h-full max-w-full object-contain drop-shadow-md transition-transform hover:scale-105",
+                              isQuesoBocadillo && "hue-rotate-15 contrast-105"
+                            )}
                           />
                         ) : (
-                          <span className="text-4xl">🍨</span>
+                          <span className="text-4xl">{isQuesoBocadillo ? '🧀' : isAmarenas ? '🍒' : '🍨'}</span>
                         )}
                       </div>
 
@@ -901,6 +908,16 @@ export const POSPage: React.FC = () => {
                         {isSinAzucar && (
                           <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">
                             🌿 Sin Azúcar ($17k)
+                          </span>
+                        )}
+                        {isQuesoBocadillo && (
+                          <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-100 text-red-900 border border-red-200">
+                            🧀 Dulce de Guayaba
+                          </span>
+                        )}
+                        {isAmarenas && (
+                          <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-pink-100 text-pink-900 border border-pink-200">
+                            🍒 Cereza Amarena
                           </span>
                         )}
                         <p className="font-sans text-[11px] text-[#6B5E4F] not-italic line-clamp-1 mt-0.5 font-normal">

@@ -271,8 +271,10 @@ function migrateSchema() {
     db.prepare("INSERT OR REPLACE INTO categories (id, name, emoji, color) VALUES (4, 'Bebidas & Aguas', '🥤', '#364266')").run();
     db.prepare("INSERT OR REPLACE INTO categories (id, name, emoji, color) VALUES (5, 'Adicionales & Toppings', '🧇', '#897863')").run();
 
-    // 1. Remove Arroz con Leche as requested
+    // 1. Remove unwanted products across categories
     db.prepare("DELETE FROM products WHERE name LIKE '%Arroz con Leche%'").run();
+    db.prepare("DELETE FROM products WHERE category_id = 4 AND (name LIKE '%Americano%' OR name LIKE '%Gas%' OR name LIKE '%Capuchino%')").run();
+    db.prepare("DELETE FROM products WHERE category_id = 5 AND name LIKE '%Topping%'").run();
 
     const gelatoSizesStd = JSON.stringify([
       { name: 'Pequeño (1 sabor)', price: 15000 },
@@ -289,15 +291,15 @@ function migrateSchema() {
     // Update standard gelato prices ($15.000 / $21.000)
     db.prepare("UPDATE products SET price = 15000, sizes = ? WHERE category_id IN (1, 2, 3) AND name NOT LIKE '%Sin Azúcar%'").run(gelatoSizesStd);
 
-    // 2. Ensure Queso y Bocadillo
+    // 2. Ensure Queso y Bocadillo with distinct Guayaba/Bocadillo styling
     const quesoBocadillo = db.prepare("SELECT id FROM products WHERE name LIKE '%Queso%Bocadillo%' OR name LIKE '%Bocadillo%Queso%'").get();
     if (!quesoBocadillo) {
       db.prepare(`
         INSERT INTO products (name, category_id, price, available, image, description, sizes, color_bg, color_accent, featured)
-        VALUES ('Queso y Bocadillo', 1, 15000, 1, '/images/products/queso-bocadillo.webp', 'Queso campesino con dulce de guayaba y bocadillo veleño', ?, '#F8EDEB', '#B03A5B', 1)
+        VALUES ('Queso y Bocadillo', 1, 15000, 1, '/images/products/queso-bocadillo.webp', 'Gelato de queso campesino artesanal con dulce de bocadillo veleño', ?, '#FFF0EB', '#B9382F', 1)
       `).run(gelatoSizesStd);
     } else {
-      db.prepare("UPDATE products SET name = 'Queso y Bocadillo', price = 15000, sizes = ?, image = '/images/products/queso-bocadillo.webp', available = 1 WHERE id = ?").run(gelatoSizesStd, quesoBocadillo.id);
+      db.prepare("UPDATE products SET name = 'Queso y Bocadillo', price = 15000, sizes = ?, color_bg = '#FFF0EB', color_accent = '#B9382F', available = 1 WHERE id = ?").run(gelatoSizesStd, quesoBocadillo.id);
     }
 
     // 3. Ensure Pistacho Sin Azúcar (SA) - $17.000 / $23.000 / $75.000
@@ -311,7 +313,7 @@ function migrateSchema() {
       db.prepare("UPDATE products SET name = 'Pistacho Sin Azúcar', price = 17000, sizes = ?, image = '/images/products/pistacho-sin-azucar.webp', available = 1 WHERE id = ?").run(gelatoSizesSA, pistachoSA.id);
     }
 
-    // 4. Ensure Affogato Clásico ($21.000) & Affogato Pistacho Sin Azúcar ($22.000)
+    // 4. Ensure Affogatos (Cat 6)
     const affogato = db.prepare("SELECT id FROM products WHERE name = 'Affogato Clásico' OR name = 'Affogato'").get();
     if (!affogato) {
       db.prepare(`
@@ -332,54 +334,48 @@ function migrateSchema() {
       db.prepare("UPDATE products SET name = 'Affogato Pistacho Sin Azúcar', price = 22000, image = '/images/products/affogato-pistacho-sa.webp', available = 1 WHERE id = ?").run(affogatoPistachoSA.id);
     }
 
-    // 5. Ensure Salsas (matching Siigo codes: Pistacho $6.000, Chocolate $4.000)
-    const salsaPistacho = db.prepare("SELECT id FROM products WHERE name LIKE '%Salsa%Pistacho%'").get();
-    if (!salsaPistacho) {
-      db.prepare(`
-        INSERT INTO products (name, category_id, price, available, image, description)
-        VALUES ('Salsa de Pistacho Artesanal', 5, 6000, 1, '/images/products/salsa-pistacho.webp', 'Cremosa salsa de pistacho italiano')
-      `).run();
+    // 5. Ensure EXACT Toppings & Adicionales (Cat 5): Conos, Salsa de Chocolate, Salsa de Pistacho, Tote Bag GIA
+    const conoProd = db.prepare("SELECT id FROM products WHERE category_id = 5 AND name LIKE '%Cono%'").get();
+    if (!conoProd) {
+      db.prepare("INSERT INTO products (name, category_id, price, available, image, description) VALUES ('Conos', 5, 2500, 1, '/images/products/cono.webp', 'Cono waffle crocante adicional')").run();
     } else {
-      db.prepare("UPDATE products SET price = 6000, image = '/images/products/salsa-pistacho.webp' WHERE id = ?").run(salsaPistacho.id);
+      db.prepare("UPDATE products SET name = 'Conos', price = 2500, available = 1 WHERE id = ?").run(conoProd.id);
     }
 
-    const salsaChoco = db.prepare("SELECT id FROM products WHERE name LIKE '%Salsa%Chocolate%'").get();
+    const salsaChoco = db.prepare("SELECT id FROM products WHERE category_id = 5 AND name LIKE '%Chocolate%'").get();
     if (!salsaChoco) {
-      db.prepare(`
-        INSERT INTO products (name, category_id, price, available, image, description)
-        VALUES ('Salsa de Chocolate Belga', 5, 4000, 1, '/images/products/salsa-chocolate.webp', 'Salsa tibia de cacao artesanal')
-      `).run();
+      db.prepare("INSERT INTO products (name, category_id, price, available, image, description) VALUES ('Salsa de Chocolate', 5, 4000, 1, '/images/products/salsa-chocolate.webp', 'Salsa tibia de cacao artesanal')").run();
     } else {
-      db.prepare("UPDATE products SET price = 4000, image = '/images/products/salsa-chocolate.webp' WHERE id = ?").run(salsaChoco.id);
+      db.prepare("UPDATE products SET name = 'Salsa de Chocolate', price = 4000, available = 1 WHERE id = ?").run(salsaChoco.id);
     }
 
-    // 6. Ensure Bebidas Siigo
-    const cafeAmericano = db.prepare("SELECT id FROM products WHERE name LIKE '%Café%Americano%' OR name LIKE '%Nespresso%'").get();
-    if (!cafeAmericano) {
-      db.prepare(`
-        INSERT INTO products (name, category_id, price, available, image, description)
-        VALUES ('Café Colombia Americano Nespresso', 4, 7000, 1, '/images/products/cafe-americano.webp', 'Café colombiano de especialidad Nespresso')
-      `).run();
+    const salsaPistacho = db.prepare("SELECT id FROM products WHERE category_id = 5 AND name LIKE '%Pistacho%' AND name LIKE '%Salsa%'").get();
+    if (!salsaPistacho) {
+      db.prepare("INSERT INTO products (name, category_id, price, available, image, description) VALUES ('Salsa de Pistacho', 5, 6000, 1, '/images/products/salsa-pistacho.webp', 'Cremosa salsa de pistacho italiano')").run();
     } else {
-      db.prepare("UPDATE products SET price = 7000, image = '/images/products/cafe-americano.webp' WHERE id = ?").run(cafeAmericano.id);
+      db.prepare("UPDATE products SET name = 'Salsa de Pistacho', price = 6000, available = 1 WHERE id = ?").run(salsaPistacho.id);
     }
 
-    const aguaHatsu = db.prepare("SELECT id FROM products WHERE name LIKE '%Hatsu%' OR name LIKE '%Agua Cristal%' OR name LIKE '%Agua%Sin Gas%'").get();
-    if (!aguaHatsu) {
-      db.prepare(`
-        INSERT INTO products (name, category_id, price, available, image, description)
-        VALUES ('Agua Hatsu 300 ml', 4, 6000, 1, '/images/products/agua-hatsu.webp', 'Botella 300ml refrescante')
-      `).run();
-    } else {
-      db.prepare("UPDATE products SET price = 6000, image = '/images/products/agua-hatsu.webp' WHERE id = ?").run(aguaHatsu.id);
-    }
-
-    const toteBag = db.prepare("SELECT id FROM products WHERE name LIKE '%Tote Bag%'").get();
+    const toteBag = db.prepare("SELECT id FROM products WHERE category_id = 5 AND name LIKE '%Tote Bag%'").get();
     if (!toteBag) {
-      db.prepare(`
-        INSERT INTO products (name, category_id, price, available, image, description)
-        VALUES ('Tote Bag GIA', 5, 25000, 1, '/images/products/tote-bag.webp', 'Bolsa ecológica de tela conmemorativa Gia')
-      `).run();
+      db.prepare("INSERT INTO products (name, category_id, price, available, image, description) VALUES ('Tote Bag GIA', 5, 25000, 1, '/images/products/tote-bag.webp', 'Bolsa ecológica conmemorativa Gia')").run();
+    } else {
+      db.prepare("UPDATE products SET name = 'Tote Bag GIA', price = 25000, available = 1 WHERE id = ?").run(toteBag.id);
+    }
+
+    // 6. Ensure EXACT Bebidas (Cat 4): Agua Cristal, Café
+    const aguaProd = db.prepare("SELECT id FROM products WHERE category_id = 4 AND (name LIKE '%Agua%' OR name LIKE '%Cristal%' OR name LIKE '%Hatsu%')").get();
+    if (!aguaProd) {
+      db.prepare("INSERT INTO products (name, category_id, price, available, image, description) VALUES ('Agua Cristal', 4, 6000, 1, '/images/products/agua-hatsu.webp', 'Botella de agua purificada')").run();
+    } else {
+      db.prepare("UPDATE products SET name = 'Agua Cristal', price = 6000, available = 1 WHERE id = ?").run(aguaProd.id);
+    }
+
+    const cafeProd = db.prepare("SELECT id FROM products WHERE category_id = 4 AND name LIKE '%Café%'").get();
+    if (!cafeProd) {
+      db.prepare("INSERT INTO products (name, category_id, price, available, image, description) VALUES ('Café', 4, 5000, 1, '/images/products/cafe-americano.webp', 'Café colombiano de especialidad')").run();
+    } else {
+      db.prepare("UPDATE products SET name = 'Café', price = 5000, available = 1 WHERE id = ?").run(cafeProd.id);
     }
   } catch (err) {
     console.error('Error syncing Gia special products:', err);
