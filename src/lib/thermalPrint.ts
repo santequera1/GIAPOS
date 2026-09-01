@@ -76,9 +76,9 @@ export function generateSalesTicketHtml(order: any, options: PrintOptions = {}):
   return `
     <div class="ticket" style="width: ${widthCss}; max-width: ${widthCss};">
       <div class="text-center">
-        <p class="font-bold" style="font-size: 11.5px; letter-spacing: 0.5px;">GIACARTAGENA SAS</p>
+        <p class="font-bold" style="font-size: 10px; letter-spacing: 0.2px;">Gia Gelateria Cartagena - Jonathan</p>
         <p class="font-bold" style="font-size: 9.5px;">GIA GELATERÍA ARTESANAL</p>
-        <p style="font-size: 7.5px;">NIT: 901961461-3 • CALLE BALOCO</p>
+        <p style="font-size: 7.5px;">CC: 1050952873-0 • CALLE BALOCO</p>
         <p style="font-size: 7.5px;">Cartagena - Tel: 3007856068</p>
       </div>
 
@@ -176,9 +176,9 @@ export function generateZReportHtml(shiftData: any, options: PrintOptions & { is
   return `
     <div class="ticket" style="width: ${widthCss}; max-width: ${widthCss};">
       <div class="text-center">
-        <p class="font-bold" style="font-size: 11px; letter-spacing: 0.5px;">GIACARTAGENA SAS</p>
+        <p class="font-bold" style="font-size: 10px; letter-spacing: 0.2px;">Gia Gelateria Cartagena - Jonathan</p>
         <p class="font-bold" style="font-size: 9.5px;">GIA GELATERÍA ARTESANAL</p>
-        <p style="font-size: 7.5px;">NIT: 901961461-3 • CALLE BALOCO</p>
+        <p style="font-size: 7.5px;">CC: 1050952873-0 • CALLE BALOCO</p>
         <p class="font-bold" style="font-size: 8.5px; margin-top: 2px; border: 1px solid #000; padding: 1px 3px; display: inline-block;">
           ${reportTitle}
         </p>

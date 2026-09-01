@@ -85,9 +85,9 @@ export const PrintModal: React.FC<PrintModalProps> = ({ isOpen, onClose, order }
           >
             {/* Header */}
             <div className="text-center pb-1.5 border-b border-gray-300">
-              <p className="font-bold text-xs tracking-wide text-[#242D49]">GIACARTAGENA SAS</p>
-              <p className="font-bold text-[10.5px] text-[#242D49]">GIA GELATERÍA</p>
-              <p className="text-[9px] text-gray-600">NIT: 901961461-3 • CALLE BALOCO</p>
+              <p className="font-bold text-[10.5px] tracking-tight text-[#242D49]">Gia Gelateria Cartagena - Jonathan</p>
+              <p className="font-bold text-[10px] text-[#242D49]">GIA GELATERÍA ARTESANAL</p>
+              <p className="text-[9px] text-gray-600">CC: 1050952873-0 • CALLE BALOCO</p>
               <p className="text-[9px] text-gray-600">Cartagena - Tel: 3007856068</p>
             </div>
 
