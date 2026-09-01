@@ -373,9 +373,9 @@ function migrateSchema() {
 
     const cafeProd = db.prepare("SELECT id FROM products WHERE category_id = 4 AND name LIKE '%Café%'").get();
     if (!cafeProd) {
-      db.prepare("INSERT INTO products (name, category_id, price, available, image, description) VALUES ('Café', 4, 5000, 1, '/images/products/cafe-americano.webp', 'Café colombiano de especialidad')").run();
+      db.prepare("INSERT INTO products (name, category_id, price, available, image, description) VALUES ('Café', 4, 5000, 1, '/images/products/vaso-pequeno.png', 'Café colombiano de especialidad')").run();
     } else {
-      db.prepare("UPDATE products SET name = 'Café', price = 5000, available = 1 WHERE id = ?").run(cafeProd.id);
+      db.prepare("UPDATE products SET name = 'Café', price = 5000, image = '/images/products/vaso-pequeno.png', available = 1 WHERE id = ?").run(cafeProd.id);
     }
   } catch (err) {
     console.error('Error syncing Gia special products:', err);
