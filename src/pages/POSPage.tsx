@@ -380,8 +380,13 @@ export const POSPage: React.FC = () => {
       cashReceived: '',
       notes: '',
       paymentSplit: undefined,
+      paymentMethod: 'cash',
+      discountType: 'percent',
+      discountValue: 0,
+      customer: { ...DEFAULT_CUSTOMER },
     });
     setFirstFlavor(null);
+    setShowDiscountInput(false);
   };
 
   // Gelato pricing helper (handles proportional scoop pricing, e.g. Pistacho Sin Azúcar)
@@ -616,16 +621,24 @@ export const POSPage: React.FC = () => {
 
       if (newId > 0) {
         setShowCheckoutModal(false);
+        setShowDiscountInput(false);
 
-        // Remove or reset completed tab
-        if (tabs.length > 1) {
-          const remaining = tabs.filter(t => t.id !== activeTabId);
-          setTabs(remaining);
-          setActiveTabId(remaining[0].id);
-        } else {
-          clearCart();
-        }
+        // Reset the completed tab into a fresh, clean account ready for the next customer
+        const resetTab: TabOrder = {
+          id: activeTabId,
+          name: currentTab.name.startsWith('Cuenta') ? currentTab.name : 'Cuenta 1',
+          cart: [],
+          customer: { ...DEFAULT_CUSTOMER },
+          notes: '',
+          paymentMethod: 'cash',
+          cashReceived: '',
+          discountType: 'percent',
+          discountValue: 0,
+          paymentSplit: undefined,
+        };
 
+        setTabs(prev => prev.map(t => (t.id === activeTabId ? resetTab : t)));
+        setFirstFlavor(null);
         setMobileView('catalog');
         toast.success(`¡Venta #${newId} registrada con éxito!`);
       } else {
