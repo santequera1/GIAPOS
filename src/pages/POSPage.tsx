@@ -436,6 +436,32 @@ export const POSPage: React.FC = () => {
     return format.price;
   };
 
+  // Gelato dynamic image helper (swaps between Cup and Cone based on selected format)
+  const getFlavorDisplayImage = (flavor: Product, format: GelatoFormat) => {
+    if (format.container === 'Cono') {
+      const nameLower = flavor.name.toLowerCase();
+      let coneSlug = '';
+      if (nameLower.includes('sin azúcar') || nameLower.includes('sin azucar') || nameLower.includes('sa')) coneSlug = 'pistacho-sin-azucar';
+      else if (nameLower.includes('pistacho')) coneSlug = 'pistacho';
+      else if (nameLower.includes('chocolate')) coneSlug = 'chocolate';
+      else if (nameLower.includes('avellana')) coneSlug = 'avellana';
+      else if (nameLower.includes('vainilla')) coneSlug = 'vainilla';
+      else if (nameLower.includes('stracciatella')) coneSlug = 'stracciatella';
+      else if (nameLower.includes('maracuyá y corozo') || nameLower.includes('maracuya y corozo')) coneSlug = 'maracuya-corozo';
+      else if (nameLower.includes('maracuyá') || nameLower.includes('maracuya')) coneSlug = 'maracuya';
+      else if (nameLower.includes('corozo')) coneSlug = 'corozo';
+      else if (nameLower.includes('amarena')) coneSlug = 'yogurt-amarenas';
+      else if (nameLower.includes('milo')) coneSlug = 'milo';
+      else if (nameLower.includes('coco')) coneSlug = 'coco-almendra';
+      else if (nameLower.includes('queso') || nameLower.includes('bocadillo')) coneSlug = 'queso-bocadillo';
+
+      if (coneSlug) {
+        return `/images/gelatos/conos/${coneSlug}.png`;
+      }
+    }
+    return flavor.image;
+  };
+
   // Flavors Dispatch Logic
   const handleFlavorClick = (flavor: Product) => {
     if (!flavor.available) {
@@ -901,21 +927,27 @@ export const POSPage: React.FC = () => {
                         )}
                       </button>
 
-                      {/* Flavor Image */}
-                      <div className="w-full h-20 lg:h-24 flex items-center justify-center my-1">
-                        {flavor.image ? (
-                          <img
-                            src={flavor.image}
-                            alt={flavor.name}
-                            className={cn(
-                              "max-h-full max-w-full object-contain drop-shadow-md transition-transform hover:scale-105",
-                              isQuesoBocadillo && "hue-rotate-15 contrast-105"
+                      {/* Flavor Image (Dynamic Vaso vs Cono) */}
+                      {(() => {
+                        const displayImg = getFlavorDisplayImage(flavor, selectedFormat);
+                        return (
+                          <div className="w-full h-20 lg:h-24 flex items-center justify-center my-1 overflow-hidden">
+                            {displayImg ? (
+                              <img
+                                key={displayImg}
+                                src={displayImg}
+                                alt={flavor.name}
+                                className={cn(
+                                  "max-h-full max-w-full object-contain drop-shadow-md transition-all duration-300 hover:scale-105",
+                                  isQuesoBocadillo && selectedFormat.container !== 'Cono' && "hue-rotate-15 contrast-105"
+                                )}
+                              />
+                            ) : (
+                              <span className="text-4xl">{isQuesoBocadillo ? '🧀' : isAmarenas ? '🍒' : '🍨'}</span>
                             )}
-                          />
-                        ) : (
-                          <span className="text-4xl">{isQuesoBocadillo ? '🧀' : isAmarenas ? '🍒' : '🍨'}</span>
-                        )}
-                      </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* Presentation format badge */}
                       <div className="mb-1">

@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { PrintModal } from '@/components/PrintModal';
+import { DailySalesChart } from '@/components/DailySalesChart';
 
 type PeriodKey = 'today' | 'yesterday' | 'week' | 'month' | 'custom';
 
@@ -504,6 +505,11 @@ export const ReportsPage: React.FC = () => {
       {/* TAB 2: Gráficas y Estadísticas */}
       {activeTab === 'graficas' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 font-sans">
+          {/* Daily Sales Bar Chart with Interactive Hover */}
+          <div className="col-span-1 lg:col-span-2">
+            <DailySalesChart orders={orders} defaultDays={14} />
+          </div>
+
           {/* Top Flavors Sold */}
           <div className="bg-white rounded-2xl p-5 border border-[#364266]/10 shadow-sm">
             <h3 className="font-bold text-base text-[#242D49] mb-4">Sabores más vendidos en el período</h3>

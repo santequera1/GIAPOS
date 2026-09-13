@@ -4,6 +4,7 @@ import { DollarSign, Package, Truck, Plus, BarChart3, Calendar } from 'lucide-re
 import { useStore } from '@/store/useStore';
 import { StatusBadge } from '@/components/StatusBadge';
 import { OrderTypeBadge } from '@/components/OrderTypeBadge';
+import { DailySalesChart } from '@/components/DailySalesChart';
 import { formatPrice, formatTime, plural, getColombiaTodayStr, getColombiaYesterdayStr, getColombiaNow, getOrderDateStr } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -120,6 +121,9 @@ const DashboardPage = () => {
           <p className="font-display font-bold text-sm">{deliveryActive}</p>
         </div>
       </div>
+
+      {/* Interactive Daily Sales Chart with Hover & Details */}
+      <DailySalesChart orders={orders} defaultDays={7} />
 
       {/* Tables summary - links to /tables */}
       <button onClick={() => navigate('/tables')}
