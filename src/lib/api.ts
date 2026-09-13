@@ -53,6 +53,19 @@ export const api = {
   toggleAvailability: (id: number) => request<any>(`/products/${id}/availability`, { method: 'PATCH' }),
   deleteProduct: (id: number) => request<any>(`/products/${id}`, { method: 'DELETE' }),
 
+  // Media Gallery & File Manager
+  getMedia: () => request<{ success: boolean; count: number; media: any[] }>('/media'),
+  uploadMedia: (filename: string, data: string) =>
+    request<{ success: boolean; url: string; filename: string; name: string; group: string }>('/media/upload', {
+      method: 'POST',
+      body: JSON.stringify({ filename, data }),
+    }),
+  updateProductImage: (productId: number, imageUrl: string) =>
+    request<{ success: boolean; product: any }>('/media/product-image', {
+      method: 'PATCH',
+      body: JSON.stringify({ productId, imageUrl }),
+    }),
+
   // Customers
   getCustomers: (search?: string) => {
     const q = search ? `?search=${encodeURIComponent(search)}` : '';

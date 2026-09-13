@@ -894,8 +894,10 @@ export const POSPage: React.FC = () => {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-2 lg:gap-2.5">
                 {gelatoFlavors.map(flavor => {
                   const isCono = selectedFormat.container === 'Cono';
+                  const isVaso4oz = selectedFormat.id === 'vaso_pequeno';
+                  const isWhiteCard = isCono || isVaso4oz;
                   const isFirstSelected = firstFlavor?.id === flavor.id;
-                  const bgColor = isCono ? '#FFFFFF' : (flavor.color_bg || '#FAF8EA');
+                  const bgColor = isWhiteCard ? '#FFFFFF' : (flavor.color_bg || '#FAF8EA');
                   const isSinAzucar = flavor.name.toLowerCase().includes('sin azúcar');
                   const isQuesoBocadillo = flavor.name.toLowerCase().includes('queso') && flavor.name.toLowerCase().includes('bocadillo');
                   const isAmarenas = flavor.name.toLowerCase().includes('amarena');
@@ -909,12 +911,12 @@ export const POSPage: React.FC = () => {
                         flavor.available
                           ? 'hover:shadow-md hover:scale-[1.02] active:scale-[0.98]'
                           : 'opacity-50 grayscale cursor-not-allowed',
-                        isCono && 'bg-white border border-[#364266]/15 hover:border-[#C6BF81]',
-                        !isCono && isQuesoBocadillo && 'border-2 border-[#B9382F]/40 bg-[#FFF5F2]',
-                        !isCono && isAmarenas && 'border-2 border-[#8B1E3F]/40 bg-[#FDF2F4]',
+                        isWhiteCard && 'bg-white border border-[#364266]/15 hover:border-[#C6BF81]',
+                        !isWhiteCard && isQuesoBocadillo && 'border-2 border-[#B9382F]/40 bg-[#FFF5F2]',
+                        !isWhiteCard && isAmarenas && 'border-2 border-[#8B1E3F]/40 bg-[#FDF2F4]',
                         isFirstSelected && 'ring-4 ring-[#364266] shadow-lg scale-[1.03]'
                       )}
-                      style={{ backgroundColor: isCono ? '#FFFFFF' : (isQuesoBocadillo ? '#FFF5F2' : isAmarenas ? '#FDF2F4' : bgColor) }}
+                      style={{ backgroundColor: isWhiteCard ? '#FFFFFF' : (isQuesoBocadillo ? '#FFF5F2' : isAmarenas ? '#FDF2F4' : bgColor) }}
                     >
                       {/* Availability Quick Toggle */}
                       <button
@@ -938,7 +940,7 @@ export const POSPage: React.FC = () => {
                         return (
                           <div className={cn(
                             "w-full flex items-center justify-center my-1 overflow-hidden transition-all",
-                            isCono ? "h-28 sm:h-32 lg:h-36" : "h-20 lg:h-24"
+                            isCono ? "h-28 sm:h-32 lg:h-36" : isVaso4oz ? "h-24 sm:h-28 lg:h-32" : "h-20 lg:h-24"
                           )}>
                             {displayImg ? (
                               <img
@@ -946,8 +948,9 @@ export const POSPage: React.FC = () => {
                                 src={displayImg}
                                 alt={flavor.name}
                                 className={cn(
-                                  "max-h-full max-w-full object-contain drop-shadow-md transition-all duration-300 hover:scale-105",
-                                  isQuesoBocadillo && !isCono && "hue-rotate-15 contrast-105"
+                                  "max-h-full max-w-full object-contain transition-all duration-300 hover:scale-105",
+                                  isWhiteCard ? "drop-shadow-none" : "drop-shadow-md",
+                                  isQuesoBocadillo && !isCono && !isVaso4oz && "hue-rotate-15 contrast-105"
                                 )}
                               />
                             ) : (

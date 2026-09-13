@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Search, Plus, Grid3X3, List, X, Trash2, Edit3 } from 'lucide-react';
+import { Search, Plus, Grid3X3, List, X, Trash2, Edit3, Image as ImageIcon } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
+import { MediaManagerModal } from '@/components/MediaManagerModal';
 
 const ProductsPage = () => {
   const { categories, products, toggleProductAvailability, addProduct, updateProduct, deleteProduct, addCategory } = useStore();
@@ -17,6 +18,8 @@ const ProductsPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '', price: '', categoryId: 1, image: '', available: true, sizes: [] as { name: string; price: number }[] });
+  const [mediaModalOpen, setMediaModalOpen] = useState(false);
+  const [mediaTarget, setMediaTarget] = useState<{ mode: 'form' | 'product'; id?: number; name?: string; currentImage?: string } | null>(null);
 
   const filtered = products.filter(p => {
     if (selectedCategory && p.categoryId !== selectedCategory) return false;
@@ -78,8 +81,19 @@ const ProductsPage = () => {
           {viewMode === 'grid' ? <List size={18} /> : <Grid3X3 size={18} />}
         </button>
         <button
-          onClick={() => { setEditingId(null); setFormData({ name: '', description: '', price: '', categoryId: 1, available: true, sizes: [] }); setShowForm(true); }}
-          className="h-10 px-4 rounded-xl bg-[#364266] text-[#FEF3DE] hover:bg-[#242D49] text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+          onClick={() => {
+            setMediaTarget(null);
+            setMediaModalOpen(true);
+          }}
+          className="h-10 px-3 sm:px-4 rounded-xl border border-[#364266]/20 bg-white hover:bg-[#FAF8EA] text-[#364266] text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+          title="Abrir explorador de fotos y subir imágenes"
+        >
+          <ImageIcon size={15} className="text-[#897863]" />
+          <span className="hidden sm:inline">Galería de Fotos</span>
+        </button>
+        <button
+          onClick={() => { setEditingId(null); setFormData({ name: '', description: '', price: '', categoryId: 1, image: '', available: true, sizes: [] }); setShowForm(true); }}
+          className="h-10 px-4 rounded-xl bg-[#364266] text-[#FEF3DE] hover:bg-[#242D49] text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all shrink-0"
         >
           <Plus size={16} /> Agregar Producto
         </button>
@@ -154,27 +168,49 @@ const ProductsPage = () => {
           {filtered.map(p => {
             const cat = categories.find(c => c.id === p.categoryId);
             return (
-              <div key={p.id} className={cn('bg-white rounded-2xl border border-[#364266]/10 shadow-sm p-3 flex flex-col justify-between', !p.available && 'opacity-50')}>
+              <div key={p.id} className={cn('bg-white rounded-2xl border border-[#364266]/10 shadow-sm p-3 flex flex-col justify-between group', !p.available && 'opacity-50')}>
                 <div>
-                  {p.image ? (
-                    <img src={p.image} alt={p.name} className="w-full aspect-square rounded-xl mb-2 object-contain bg-[#FAF8EA]/50 p-1" />
-                  ) : (
-                    <div className="w-full h-24 rounded-xl mb-2 flex items-center justify-center text-3xl bg-[#FAF8EA]">
-                      {cat?.emoji || '🍨'}
+                  <div
+                    className="relative cursor-pointer group/img overflow-hidden rounded-xl mb-2"
+                    onClick={() => {
+                      setMediaTarget({ mode: 'product', id: p.id, name: p.name, currentImage: p.image });
+                      setMediaModalOpen(true);
+                    }}
+                    title="Haz clic para cambiar la foto del producto"
+                  >
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} className="w-full aspect-square object-contain bg-[#FAF8EA]/60 p-1.5 transition-transform duration-300 group-hover/img:scale-105" />
+                    ) : (
+                      <div className="w-full h-24 flex items-center justify-center text-3xl bg-[#FAF8EA] transition-transform duration-300 group-hover/img:scale-105">
+                        {cat?.emoji || '🍨'}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity text-white text-[11px] font-bold gap-1 rounded-xl">
+                      <ImageIcon size={14} /> Cambiar Foto
                     </div>
-                  )}
+                  </div>
                   <p className="text-xs font-bold text-[#242D49] truncate">{p.name}</p>
                   <p className="text-[11px] text-[#897863] truncate">{cat?.name}</p>
                   <p className="text-sm font-bold text-[#344268] mt-1">{p.sizes ? `Desde ${formatPrice(p.price)}` : formatPrice(p.price)}</p>
                 </div>
                 <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
                     <button onClick={() => openEdit(p.id)} className="text-xs text-[#364266] hover:underline font-bold flex items-center gap-0.5">
                       <Edit3 size={11} /> Editar
                     </button>
+                    <button
+                      onClick={() => {
+                        setMediaTarget({ mode: 'product', id: p.id, name: p.name, currentImage: p.image });
+                        setMediaModalOpen(true);
+                      }}
+                      className="text-xs text-[#364266] hover:underline font-bold flex items-center gap-0.5"
+                      title="Cambiar foto del producto"
+                    >
+                      <ImageIcon size={11} /> Foto
+                    </button>
                     <button onClick={() => { if (window.confirm(`¿Eliminar el producto "${p.name}"?`)) deleteProduct(p.id); }}
                       className="text-xs text-red-600 hover:underline font-semibold flex items-center gap-0.5">
-                      <Trash2 size={11} /> Eliminar
+                      <Trash2 size={11} />
                     </button>
                   </div>
                   <button onClick={() => toggleProductAvailability(p.id)}
@@ -193,18 +229,40 @@ const ProductsPage = () => {
             const cat = categories.find(c => c.id === p.categoryId);
             return (
               <div key={p.id} className={cn('bg-white rounded-2xl border border-[#364266]/10 shadow-sm p-3 flex items-center gap-3', !p.available && 'opacity-50')}>
-                {p.image ? (
-                  <img src={p.image} alt={p.name} className="w-12 h-12 rounded-xl object-contain bg-[#FAF8EA] p-1 shrink-0" />
-                ) : (
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 bg-[#FAF8EA]">
-                    {cat?.emoji || '🍨'}
+                <div
+                  className="relative cursor-pointer group/listimg shrink-0 overflow-hidden rounded-xl"
+                  onClick={() => {
+                    setMediaTarget({ mode: 'product', id: p.id, name: p.name, currentImage: p.image });
+                    setMediaModalOpen(true);
+                  }}
+                  title="Haz clic para cambiar la foto"
+                >
+                  {p.image ? (
+                    <img src={p.image} alt={p.name} className="w-12 h-12 object-contain bg-[#FAF8EA] p-1 transition-transform group-hover/listimg:scale-105" />
+                  ) : (
+                    <div className="w-12 h-12 flex items-center justify-center text-xl shrink-0 bg-[#FAF8EA] transition-transform group-hover/listimg:scale-105">
+                      {cat?.emoji || '🍨'}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/listimg:opacity-100 flex items-center justify-center transition-opacity text-white rounded-xl">
+                    <ImageIcon size={13} />
                   </div>
-                )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-[#242D49] truncate">{p.name}</p>
                   <p className="text-xs text-[#897863]">{cat?.name}</p>
                 </div>
                 <span className="font-bold text-sm text-[#344268]">{p.sizes ? `Desde ${formatPrice(p.price)}` : formatPrice(p.price)}</span>
+                <button
+                  onClick={() => {
+                    setMediaTarget({ mode: 'product', id: p.id, name: p.name, currentImage: p.image });
+                    setMediaModalOpen(true);
+                  }}
+                  className="text-xs text-[#364266] font-bold px-2 py-1 rounded-lg hover:bg-gray-100 flex items-center gap-1"
+                  title="Cambiar foto del producto"
+                >
+                  <ImageIcon size={12} /> Foto
+                </button>
                 <button onClick={() => openEdit(p.id)} className="text-xs text-[#364266] font-bold px-2 py-1 rounded-lg hover:bg-gray-100">Editar</button>
                 <button onClick={() => { if (window.confirm(`¿Eliminar "${p.name}"?`)) deleteProduct(p.id); }}
                   className="text-red-500 p-1 rounded-lg hover:bg-red-50"><Trash2 size={15} /></button>
@@ -282,16 +340,28 @@ const ProductsPage = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-[#364266] mb-1 block">Imagen (URL o Ruta)</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-[#364266]">Imagen del Producto</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMediaTarget({ mode: 'form', name: formData.name, currentImage: formData.image });
+                        setMediaModalOpen(true);
+                      }}
+                      className="text-xs px-2.5 py-1 rounded-lg bg-[#364266] text-[#FEF3DE] hover:bg-[#242D49] font-bold flex items-center gap-1.5 shadow-sm transition-all"
+                    >
+                      <ImageIcon size={13} /> 🖼️ Explorador / Subir Foto
+                    </button>
+                  </div>
                   <div className="flex gap-2 items-center">
                     <input
                       value={formData.image}
                       onChange={e => setFormData({ ...formData, image: e.target.value })}
-                      placeholder="/images/products/cup-4oz.webp o URL"
+                      placeholder="/images/gelatos/conos/chocolate.png o URL"
                       className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-xs outline-none focus:ring-2 focus:ring-[#364266]"
                     />
                     {formData.image && (
-                      <div className="w-9 h-9 rounded-lg border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center bg-gray-50">
+                      <div className="w-10 h-10 rounded-lg border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center bg-gray-50 p-0.5">
                         <img src={formData.image} alt="Preview" className="max-h-full max-w-full object-contain" />
                       </div>
                     )}
@@ -325,6 +395,26 @@ const ProductsPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Media Manager / File Explorer Modal */}
+      <MediaManagerModal
+        isOpen={mediaModalOpen}
+        onClose={() => {
+          setMediaModalOpen(false);
+          setMediaTarget(null);
+        }}
+        currentImageUrl={mediaTarget?.currentImage || formData.image}
+        productName={mediaTarget?.name || (mediaTarget?.mode === 'form' ? formData.name : undefined)}
+        productId={mediaTarget?.mode === 'product' ? mediaTarget.id : undefined}
+        onSelectImage={(url) => {
+          if (mediaTarget?.mode === 'form' || showForm) {
+            setFormData(prev => ({ ...prev, image: url }));
+          }
+        }}
+        onImageSavedToProduct={(productId, newImageUrl) => {
+          updateProduct(productId, { image: newImageUrl });
+        }}
+      />
     </div>
   );
 };
