@@ -13,7 +13,7 @@ import {
   BarChart3,
   Trash2,
 } from 'lucide-react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend } from 'recharts';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -105,10 +105,25 @@ export const ReportsPage: React.FC = () => {
     filtered.forEach(o => {
       if (o.status === 'cancelled') return;
       o.items.forEach(i => {
-        const key = i.flavors ? `${i.name} (${i.flavors})` : i.name;
-        if (!counts[key]) counts[key] = { qty: 0, revenue: 0 };
-        counts[key].qty += i.quantity;
-        counts[key].revenue += i.price * i.quantity;
+        if (i.flavors) {
+          const splitFlavors = i.flavors.split(',').map(s => s.trim()).filter(Boolean);
+          splitFlavors.forEach(f => {
+            if (!counts[f]) counts[f] = { qty: 0, revenue: 0 };
+            counts[f].qty += i.quantity;
+            counts[f].revenue += Math.round((i.price * i.quantity) / splitFlavors.length);
+          });
+        } else if (i.name && i.name.includes('—')) {
+          const parts = i.name.split('—');
+          const cleanName = parts[parts.length - 1].trim();
+          if (!counts[cleanName]) counts[cleanName] = { qty: 0, revenue: 0 };
+          counts[cleanName].qty += i.quantity;
+          counts[cleanName].revenue += i.price * i.quantity;
+        } else {
+          const name = i.name.trim();
+          if (!counts[name]) counts[name] = { qty: 0, revenue: 0 };
+          counts[name].qty += i.quantity;
+          counts[name].revenue += i.price * i.quantity;
+        }
       });
     });
     return Object.entries(counts)
@@ -504,31 +519,39 @@ export const ReportsPage: React.FC = () => {
 
       {/* TAB 2: Gráficas y Estadísticas */}
       {activeTab === 'graficas' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 font-sans">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 font-sans">
           {/* Daily Sales Bar Chart with Interactive Hover */}
-          <div className="col-span-1 lg:col-span-2">
+          <div className="col-span-1 lg:col-span-12">
             <DailySalesChart orders={orders} defaultDays={14} />
           </div>
 
-          {/* Top Flavors Sold */}
-          <div className="bg-white rounded-2xl p-5 border border-[#364266]/10 shadow-sm">
-            <h3 className="font-bold text-base text-[#242D49] mb-4">Sabores más vendidos en el período</h3>
-            <div className="h-64">
+          {/* Top Flavors Sold - Expanded width (8 cols on lg) and increased height to eliminate text overlap */}
+          <div className="col-span-1 lg:col-span-8 bg-white rounded-2xl p-5 border border-[#364266]/10 shadow-sm flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-base text-[#242D49]">Sabores más vendidos en el período</h3>
+              <span className="text-xs text-[#897863] bg-[#FAF8EA] px-2.5 py-1 rounded-lg border border-[#364266]/10 font-medium">Top 10 sabores</span>
+            </div>
+            <div className="h-[420px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={flavorStats} layout="vertical" margin={{ left: 20 }}>
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(val: any) => [`${val} unidades`, 'Cantidad']} />
-                  <Bar dataKey="qty" fill="#364266" radius={[0, 8, 8, 0]} />
+                <BarChart data={flavorStats} layout="vertical" margin={{ left: 10, right: 30, top: 10, bottom: 10 }}>
+                  <XAxis type="number" tick={{ fontSize: 11, fill: '#897863' }} />
+                  <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12, fill: '#242D49', fontWeight: 500 }} />
+                  <Tooltip
+                    formatter={(val: any, _name: any, item: any) => [
+                      `${val} porciones / unidades (${formatPrice(item.payload.revenue || 0)})`,
+                      'Vendido'
+                    ]}
+                  />
+                  <Bar dataKey="qty" fill="#364266" radius={[0, 8, 8, 0]} barSize={22} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Payment Methods Distribution */}
-          <div className="bg-white rounded-2xl p-5 border border-[#364266]/10 shadow-sm">
+          {/* Payment Methods Distribution - Compact width (4 cols on lg) */}
+          <div className="col-span-1 lg:col-span-4 bg-white rounded-2xl p-5 border border-[#364266]/10 shadow-sm flex flex-col justify-between">
             <h3 className="font-bold text-base text-[#242D49] mb-4">Distribución por Método de Pago</h3>
-            <div className="h-64 flex items-center justify-center">
+            <div className="h-[420px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -541,9 +564,10 @@ export const ReportsPage: React.FC = () => {
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    label={(entry) => `${entry.name}: ${formatPrice(entry.value)}`}
+                    cy="45%"
+                    innerRadius={45}
+                    outerRadius={75}
+                    paddingAngle={3}
                   >
                     {[
                       { color: '#364266' },
@@ -555,6 +579,7 @@ export const ReportsPage: React.FC = () => {
                     ))}
                   </Pie>
                   <Tooltip formatter={(val: any) => formatPrice(Number(val))} />
+                  <Legend verticalAlign="bottom" height={40} iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

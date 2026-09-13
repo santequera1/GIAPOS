@@ -23,6 +23,7 @@ router.get('/', (req, res) => {
     const scanFolders = [
       { dir: 'images/gelatos/vaso4oz', group: 'Vasos 4 oz (Café clarito)' },
       { dir: 'images/gelatos/conos', group: 'Conos Waffle' },
+      { dir: 'images/gelatos/litro', group: 'Envases 1 Litro (Abiertos)' },
       { dir: 'images/gelatos', group: 'Vasos 6 oz (Tarrina azul)', recursive: false },
       { dir: 'images/products', group: 'Bebidas & Toppings', recursive: false },
       { dir: 'images/uploads', group: 'Mis Fotos Subidas' },

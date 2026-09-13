@@ -462,6 +462,10 @@ export const POSPage: React.FC = () => {
       if (slug) return `/images/gelatos/vaso4oz/${slug}.png`;
     }
 
+    if (format.id === 'litro' || format.container === 'Familiar') {
+      if (slug) return `/images/gelatos/litro/${slug}.png`;
+    }
+
     return flavor.image;
   };
 
@@ -895,7 +899,8 @@ export const POSPage: React.FC = () => {
                 {gelatoFlavors.map(flavor => {
                   const isCono = selectedFormat.container === 'Cono';
                   const isVaso4oz = selectedFormat.id === 'vaso_pequeno';
-                  const isWhiteCard = isCono || isVaso4oz;
+                  const isLitro = selectedFormat.id === 'litro' || selectedFormat.container === 'Familiar';
+                  const isWhiteCard = isCono || isVaso4oz || isLitro;
                   const isFirstSelected = firstFlavor?.id === flavor.id;
                   const bgColor = isWhiteCard ? '#FFFFFF' : (flavor.color_bg || '#FAF8EA');
                   const isSinAzucar = flavor.name.toLowerCase().includes('sin azúcar');
@@ -934,13 +939,13 @@ export const POSPage: React.FC = () => {
                         )}
                       </button>
 
-                      {/* Flavor Image (Dynamic Vaso 4oz, Vaso 6oz vs Cono) */}
+                      {/* Flavor Image (Dynamic Vaso 4oz, Vaso 6oz, Cono vs Litro) */}
                       {(() => {
                         const displayImg = getFlavorDisplayImage(flavor, selectedFormat);
                         return (
                           <div className={cn(
                             "w-full flex items-center justify-center my-1 overflow-hidden transition-all",
-                            isCono ? "h-28 sm:h-32 lg:h-36" : isVaso4oz ? "h-24 sm:h-28 lg:h-32" : "h-20 lg:h-24"
+                            isCono ? "h-28 sm:h-32 lg:h-36" : (isVaso4oz || isLitro) ? "h-24 sm:h-28 lg:h-32" : "h-20 lg:h-24"
                           )}>
                             {displayImg ? (
                               <img
@@ -950,7 +955,7 @@ export const POSPage: React.FC = () => {
                                 className={cn(
                                   "max-h-full max-w-full object-contain transition-all duration-300 hover:scale-105",
                                   isWhiteCard ? "drop-shadow-none" : "drop-shadow-md",
-                                  isQuesoBocadillo && !isCono && !isVaso4oz && "hue-rotate-15 contrast-105"
+                                  isQuesoBocadillo && !isCono && !isVaso4oz && !isLitro && "hue-rotate-15 contrast-105"
                                 )}
                               />
                             ) : (
