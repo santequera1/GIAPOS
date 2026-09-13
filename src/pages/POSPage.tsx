@@ -438,27 +438,30 @@ export const POSPage: React.FC = () => {
 
   // Gelato dynamic image helper (swaps between Cup and Cone based on selected format)
   const getFlavorDisplayImage = (flavor: Product, format: GelatoFormat) => {
-    if (format.container === 'Cono') {
-      const nameLower = flavor.name.toLowerCase();
-      let coneSlug = '';
-      if (nameLower.includes('sin azúcar') || nameLower.includes('sin azucar') || nameLower.includes('sa')) coneSlug = 'pistacho-sin-azucar';
-      else if (nameLower.includes('pistacho')) coneSlug = 'pistacho';
-      else if (nameLower.includes('chocolate')) coneSlug = 'chocolate';
-      else if (nameLower.includes('avellana')) coneSlug = 'avellana';
-      else if (nameLower.includes('vainilla')) coneSlug = 'vainilla';
-      else if (nameLower.includes('stracciatella')) coneSlug = 'stracciatella';
-      else if (nameLower.includes('maracuyá y corozo') || nameLower.includes('maracuya y corozo')) coneSlug = 'maracuya-corozo';
-      else if (nameLower.includes('maracuyá') || nameLower.includes('maracuya')) coneSlug = 'maracuya';
-      else if (nameLower.includes('corozo')) coneSlug = 'corozo';
-      else if (nameLower.includes('amarena')) coneSlug = 'yogurt-amarenas';
-      else if (nameLower.includes('milo')) coneSlug = 'milo';
-      else if (nameLower.includes('coco')) coneSlug = 'coco-almendra';
-      else if (nameLower.includes('queso') || nameLower.includes('bocadillo')) coneSlug = 'queso-bocadillo';
+    const nameLower = flavor.name.toLowerCase();
+    let slug = '';
+    if (nameLower.includes('sin azúcar') || nameLower.includes('sin azucar') || nameLower.includes('sa')) slug = 'pistacho-sin-azucar';
+    else if (nameLower.includes('pistacho')) slug = 'pistacho';
+    else if (nameLower.includes('chocolate')) slug = 'chocolate';
+    else if (nameLower.includes('avellana')) slug = 'avellana';
+    else if (nameLower.includes('vainilla')) slug = 'vainilla';
+    else if (nameLower.includes('stracciatella')) slug = 'stracciatella';
+    else if (nameLower.includes('maracuyá y corozo') || nameLower.includes('maracuya y corozo')) slug = 'maracuya-corozo';
+    else if (nameLower.includes('maracuyá') || nameLower.includes('maracuya')) slug = 'maracuya';
+    else if (nameLower.includes('corozo')) slug = 'corozo';
+    else if (nameLower.includes('amarena')) slug = 'yogurt-amarenas';
+    else if (nameLower.includes('milo')) slug = 'milo';
+    else if (nameLower.includes('coco')) slug = 'coco-almendra';
+    else if (nameLower.includes('queso') || nameLower.includes('bocadillo')) slug = 'queso-bocadillo';
 
-      if (coneSlug) {
-        return `/images/gelatos/conos/${coneSlug}.png`;
-      }
+    if (format.container === 'Cono') {
+      if (slug) return `/images/gelatos/conos/${slug}.png`;
     }
+
+    if (format.id === 'vaso_pequeno') {
+      if (slug) return `/images/gelatos/vaso4oz/${slug}.png`;
+    }
+
     return flavor.image;
   };
 
@@ -890,8 +893,9 @@ export const POSPage: React.FC = () => {
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-2 lg:gap-2.5">
                 {gelatoFlavors.map(flavor => {
+                  const isCono = selectedFormat.container === 'Cono';
                   const isFirstSelected = firstFlavor?.id === flavor.id;
-                  const bgColor = flavor.color_bg || '#FAF8EA';
+                  const bgColor = isCono ? '#FFFFFF' : (flavor.color_bg || '#FAF8EA');
                   const isSinAzucar = flavor.name.toLowerCase().includes('sin azúcar');
                   const isQuesoBocadillo = flavor.name.toLowerCase().includes('queso') && flavor.name.toLowerCase().includes('bocadillo');
                   const isAmarenas = flavor.name.toLowerCase().includes('amarena');
@@ -905,11 +909,12 @@ export const POSPage: React.FC = () => {
                         flavor.available
                           ? 'hover:shadow-md hover:scale-[1.02] active:scale-[0.98]'
                           : 'opacity-50 grayscale cursor-not-allowed',
-                        isQuesoBocadillo && 'border-2 border-[#B9382F]/40 bg-[#FFF5F2]',
-                        isAmarenas && 'border-2 border-[#8B1E3F]/40 bg-[#FDF2F4]',
+                        isCono && 'bg-white border border-[#364266]/15 hover:border-[#C6BF81]',
+                        !isCono && isQuesoBocadillo && 'border-2 border-[#B9382F]/40 bg-[#FFF5F2]',
+                        !isCono && isAmarenas && 'border-2 border-[#8B1E3F]/40 bg-[#FDF2F4]',
                         isFirstSelected && 'ring-4 ring-[#364266] shadow-lg scale-[1.03]'
                       )}
-                      style={{ backgroundColor: isQuesoBocadillo ? '#FFF5F2' : isAmarenas ? '#FDF2F4' : bgColor }}
+                      style={{ backgroundColor: isCono ? '#FFFFFF' : (isQuesoBocadillo ? '#FFF5F2' : isAmarenas ? '#FDF2F4' : bgColor) }}
                     >
                       {/* Availability Quick Toggle */}
                       <button
@@ -927,11 +932,14 @@ export const POSPage: React.FC = () => {
                         )}
                       </button>
 
-                      {/* Flavor Image (Dynamic Vaso vs Cono) */}
+                      {/* Flavor Image (Dynamic Vaso 4oz, Vaso 6oz vs Cono) */}
                       {(() => {
                         const displayImg = getFlavorDisplayImage(flavor, selectedFormat);
                         return (
-                          <div className="w-full h-20 lg:h-24 flex items-center justify-center my-1 overflow-hidden">
+                          <div className={cn(
+                            "w-full flex items-center justify-center my-1 overflow-hidden transition-all",
+                            isCono ? "h-28 sm:h-32 lg:h-36" : "h-20 lg:h-24"
+                          )}>
                             {displayImg ? (
                               <img
                                 key={displayImg}
@@ -939,7 +947,7 @@ export const POSPage: React.FC = () => {
                                 alt={flavor.name}
                                 className={cn(
                                   "max-h-full max-w-full object-contain drop-shadow-md transition-all duration-300 hover:scale-105",
-                                  isQuesoBocadillo && selectedFormat.container !== 'Cono' && "hue-rotate-15 contrast-105"
+                                  isQuesoBocadillo && !isCono && "hue-rotate-15 contrast-105"
                                 )}
                               />
                             ) : (
