@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@/store/useStore';
 import { api } from '@/lib/api';
-import { Save, Check, Plus, X, Edit2, Trash2 } from 'lucide-react';
+import { Save, Check, Plus, X, Edit2, Trash2, Bot, Key, Copy, MessageCircle, Sparkles } from 'lucide-react';
 
 const SettingsPage = () => {
   const { deliveryFee, tableCount, categories, user, addCategory, updateCategory, deleteCategory } = useStore();
@@ -12,6 +12,8 @@ const SettingsPage = () => {
   const [editTableCount, setEditTableCount] = useState('');
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
+  const [copiedWebhook, setCopiedWebhook] = useState(false);
 
   // Category form
   const [showCatForm, setShowCatForm] = useState(false);
@@ -161,6 +163,93 @@ const SettingsPage = () => {
       <section className="bg-card rounded-xl border border-border p-4 shadow-card font-sans">
         <h3 className="font-sans font-bold text-sm mb-2">👤 Usuario actual</h3>
         <p className="text-sm">{user?.name} <span className="text-xs text-muted-foreground capitalize">({user?.role})</span></p>
+      </section>
+
+      {/* WhatsApp AI Assistant Integration */}
+      <section className="bg-white rounded-2xl border border-[#364266]/15 p-5 shadow-sm space-y-4 font-sans text-left">
+        <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center">
+              <Bot size={22} />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-[#242D49] flex items-center gap-1.5">
+                Integración Asistente IA WhatsApp
+                <span className="px-2 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                  Activo
+                </span>
+              </h3>
+              <p className="text-xs text-gray-400">Control de productos, ventas y pedidos desde WhatsApp</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Webhook URL */}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-gray-700 flex items-center gap-1">
+            <MessageCircle size={13} className="text-emerald-600" /> Webhook Universal IA (POST)
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value="https://pos.giagelateria.com/api/whatsapp-ai/webhook"
+              className="flex-1 px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-mono text-gray-700 select-all outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText('https://pos.giagelateria.com/api/whatsapp-ai/webhook');
+                setCopiedWebhook(true);
+                setTimeout(() => setCopiedWebhook(false), 2000);
+              }}
+              className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-[#364266] transition-colors flex items-center gap-1 shrink-0"
+            >
+              {copiedWebhook ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+              <span>{copiedWebhook ? 'Copiado' : 'Copiar'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* API Key */}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-gray-700 flex items-center gap-1">
+            <Key size={13} className="text-amber-600" /> Clave de Seguridad (API Key)
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value="gia_ai_bot_2026_cartagena"
+              className="flex-1 px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-mono text-gray-700 select-all outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText('gia_ai_bot_2026_cartagena');
+                setCopiedKey(true);
+                setTimeout(() => setCopiedKey(false), 2000);
+              }}
+              className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-[#364266] transition-colors flex items-center gap-1 shrink-0"
+            >
+              {copiedKey ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+              <span>{copiedKey ? 'Copiado' : 'Copiar'}</span>
+            </button>
+          </div>
+          <p className="text-[10px] text-gray-400">Incluir en la cabecera HTTP: <code>x-api-key: gia_ai_bot_2026_cartagena</code></p>
+        </div>
+
+        {/* Capabilities list */}
+        <div className="bg-[#FAF8EA] p-3 rounded-xl border border-[#C6BF81]/30 text-xs text-[#364266] space-y-1.5">
+          <span className="font-bold block flex items-center gap-1 text-[11px]">
+            <Sparkles size={12} className="text-amber-600" /> Capacidades soportadas por la API de IA:
+          </span>
+          <ul className="list-disc list-inside text-[11px] space-y-0.5 text-gray-700">
+            <li><strong>Consultar ventas:</strong> hoy, ayer, semana o mes con desglose de métodos de pago.</li>
+            <li><strong>Catálogo:</strong> buscar productos, precios y disponibilidad actual.</li>
+            <li><strong>Cambiar precios:</strong> actualizar valor de productos en vivo vía WhatsApp.</li>
+            <li><strong>Disponibilidad:</strong> pausar o reanudar sabores agotados al instante.</li>
+            <li><strong>Consultar comprobantes y clientes:</strong> buscar órdenes recientes o datos fiscales.</li>
+          </ul>
+        </div>
       </section>
 
       {/* Save button */}

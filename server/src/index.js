@@ -36,6 +36,9 @@ app.use('/api/shifts', authMiddleware, require('./routes/shifts'));
 app.use('/api/settings', authMiddleware, require('./routes/settings'));
 app.use('/api/drivers', authMiddleware, require('./routes/drivers'));
 
+// WhatsApp AI Integration (API Key authenticated)
+app.use('/api/whatsapp-ai', require('./routes/whatsappAi'));
+
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', business: 'GIA Gelatería' }));
 
