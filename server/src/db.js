@@ -318,20 +318,20 @@ function migrateSchema() {
     if (!affogato) {
       db.prepare(`
         INSERT INTO products (name, category_id, price, available, image, description)
-        VALUES ('Affogato Clásico', 6, 21000, 1, '/images/products/affogato.png', 'Gelato artesanal al gusto con shot de espresso caliente italiano')
+        VALUES ('Affogato Clásico', 6, 21000, 1, '/images/products/affogato.webp', 'Gelato artesanal al gusto con shot de espresso caliente italiano')
       `).run();
     } else {
-      db.prepare("UPDATE products SET name = 'Affogato Clásico', price = 21000, image = '/images/products/affogato.png', available = 1 WHERE id = ?").run(affogato.id);
+      db.prepare("UPDATE products SET name = 'Affogato Clásico', price = 21000, image = '/images/products/affogato.webp', available = 1 WHERE id = ?").run(affogato.id);
     }
 
     const affogatoPistachoSA = db.prepare("SELECT id FROM products WHERE name LIKE '%Affogato%Pistacho%'").get();
     if (!affogatoPistachoSA) {
       db.prepare(`
         INSERT INTO products (name, category_id, price, available, image, description)
-        VALUES ('Affogato Pistacho Sin Azúcar', 6, 22000, 1, '/images/products/affogato.png', 'Gelato de Pistacho Sin Azúcar 100% puro con shot de espresso caliente italiano')
+        VALUES ('Affogato Pistacho Sin Azúcar', 6, 22000, 1, '/images/products/affogato.webp', 'Gelato de Pistacho Sin Azúcar 100% puro con shot de espresso caliente italiano')
       `).run();
     } else {
-      db.prepare("UPDATE products SET name = 'Affogato Pistacho Sin Azúcar', price = 22000, image = '/images/products/affogato.png', available = 1 WHERE id = ?").run(affogatoPistachoSA.id);
+      db.prepare("UPDATE products SET name = 'Affogato Pistacho Sin Azúcar', price = 22000, image = '/images/products/affogato.webp', available = 1 WHERE id = ?").run(affogatoPistachoSA.id);
     }
 
     // 5. Ensure EXACT Toppings & Adicionales (Cat 5): Conos, Salsa de Chocolate, Salsa de Pistacho, Tote Bag GIA
@@ -366,17 +366,20 @@ function migrateSchema() {
     // 6. Ensure EXACT Bebidas (Cat 4): Agua Cristal, Café
     const aguaProd = db.prepare("SELECT id FROM products WHERE category_id = 4 AND (name LIKE '%Agua%' OR name LIKE '%Cristal%' OR name LIKE '%Hatsu%')").get();
     if (!aguaProd) {
-      db.prepare("INSERT INTO products (name, category_id, price, available, image, description) VALUES ('Agua Cristal', 4, 6000, 1, '/images/products/agua.png', 'Botella de agua purificada Cristal')").run();
+      db.prepare("INSERT INTO products (name, category_id, price, available, image, description) VALUES ('Agua Cristal', 4, 6000, 1, '/images/products/agua.webp', 'Botella de agua purificada Cristal')").run();
     } else {
-      db.prepare("UPDATE products SET name = 'Agua Cristal', price = 6000, image = '/images/products/agua.png', available = 1 WHERE id = ?").run(aguaProd.id);
+      db.prepare("UPDATE products SET name = 'Agua Cristal', price = 6000, image = '/images/products/agua.webp', available = 1 WHERE id = ?").run(aguaProd.id);
     }
 
     const cafeProd = db.prepare("SELECT id FROM products WHERE category_id = 4 AND name LIKE '%Café%'").get();
     if (!cafeProd) {
-      db.prepare("INSERT INTO products (name, category_id, price, available, image, description) VALUES ('Café', 4, 5000, 1, '/images/products/vaso-pequeno.png', 'Café colombiano de especialidad')").run();
+      db.prepare("INSERT INTO products (name, category_id, price, available, image, description) VALUES ('Café', 4, 5000, 1, '/images/products/vaso-pequeno.webp', 'Café colombiano de especialidad')").run();
     } else {
-      db.prepare("UPDATE products SET name = 'Café', price = 5000, image = '/images/products/vaso-pequeno.png', available = 1 WHERE id = ?").run(cafeProd.id);
+      db.prepare("UPDATE products SET name = 'Café', price = 5000, image = '/images/products/vaso-pequeno.webp', available = 1 WHERE id = ?").run(cafeProd.id);
     }
+
+    // Auto-migrate any legacy .png product image paths to .webp
+    db.prepare("UPDATE products SET image = REPLACE(image, '.png', '.webp') WHERE image LIKE '%.png'").run();
   } catch (err) {
     console.error('Error syncing Gia special products:', err);
   }

@@ -45,11 +45,11 @@ export interface GelatoFormat {
 }
 
 const GELATO_FORMATS: GelatoFormat[] = [
-  { id: 'vaso_pequeno', name: 'Vaso 4 oz',   container: 'Vaso',     capacity: '4 oz',   scoops: 1, price: 15000, desc: '1 sabor (4 oz)',      emoji: '🍨', image: '/images/products/vaso-pequeno.png' },
+  { id: 'vaso_pequeno', name: 'Vaso 4 oz',   container: 'Vaso',     capacity: '4 oz',   scoops: 1, price: 15000, desc: '1 sabor (4 oz)',      emoji: '🍨', image: '/images/products/vaso-pequeno.webp' },
   { id: 'vaso_grande',  name: 'Vaso 6 oz',   container: 'Vaso',     capacity: '6 oz',   scoops: 2, price: 21000, desc: '2 sabores (6 oz)',     emoji: '🍨', image: '/images/products/vaso-6oz.webp' },
   { id: 'cono_pequeno', name: 'Cono 1 Sabor', container: 'Cono',    capacity: 'Cono',   scoops: 1, price: 15000, desc: '1 sabor en cono',      emoji: '🍦', image: '/images/products/cono-pequeno.webp' },
   { id: 'cono_grande',  name: 'Cono 2 Sabores', container: 'Cono',  capacity: 'Cono',   scoops: 2, price: 21000, desc: '2 sabores en cono',    emoji: '🍦', image: '/images/products/cono-grande.webp' },
-  { id: 'litro',        name: 'Litro Familiar', container: 'Familiar', capacity: '1000 ml', scoops: 2, price: 70000, desc: '2 sabores (familiar)', emoji: '🧊', image: '/images/products/helado-litro.png' },
+  { id: 'litro',        name: 'Litro Familiar', container: 'Familiar', capacity: '1000 ml', scoops: 2, price: 70000, desc: '2 sabores (familiar)', emoji: '🧊', image: '/images/products/helado-litro.webp' },
 ];
 
 const QUICK_CASH_AMOUNTS = [15000, 20000, 21000, 50000, 100000];
@@ -455,15 +455,15 @@ export const POSPage: React.FC = () => {
     else if (nameLower.includes('queso') || nameLower.includes('bocadillo')) slug = 'queso-bocadillo';
 
     if (format.container === 'Cono') {
-      if (slug) return `/images/gelatos/conos/${slug}.png`;
+      if (slug) return `/images/gelatos/conos/${slug}.webp`;
     }
 
     if (format.id === 'vaso_pequeno') {
-      if (slug) return `/images/gelatos/vaso4oz/${slug}.png`;
+      if (slug) return `/images/gelatos/vaso4oz/${slug}.webp`;
     }
 
     if (format.id === 'litro' || format.container === 'Familiar') {
-      if (slug) return `/images/gelatos/litro/${slug}.png`;
+      if (slug) return `/images/gelatos/litro/${slug}.webp`;
     }
 
     return flavor.image;

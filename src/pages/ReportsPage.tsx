@@ -220,69 +220,6 @@ export const ReportsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Top KPI Metrics Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-[#364266]/10 shadow-sm">
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 text-left">
-          {/* Efectivo */}
-          <div className="p-2 border-r border-gray-100 last:border-r-0">
-            <span className="text-[11px] font-medium text-gray-500 block font-sans">Efectivo</span>
-            <span className="text-sm lg:text-base font-bold font-sans text-[#242D49] block mt-0.5">
-              {formatPrice(metrics.cash)}
-            </span>
-          </div>
-
-          {/* Tarjetas */}
-          <div className="p-2 border-r border-gray-100 last:border-r-0">
-            <span className="text-[11px] font-medium text-gray-500 block font-sans">Tarjetas</span>
-            <span className="text-sm lg:text-base font-bold font-sans text-[#242D49] block mt-0.5">
-              {formatPrice(metrics.cards)}
-            </span>
-            <span className="text-[10px] text-gray-400 font-sans block">(Déb: {formatPrice(metrics.debit)})</span>
-          </div>
-
-          {/* Pagos en línea / QR */}
-          <div className="p-2 border-r border-gray-100 last:border-r-0">
-            <span className="text-[11px] font-medium text-gray-500 block font-sans">Pagos QR / Transferencia</span>
-            <span className="text-sm lg:text-base font-bold font-sans text-[#242D49] block mt-0.5">
-              {formatPrice(metrics.transfer)}
-            </span>
-          </div>
-
-          {/* Crédito */}
-          <div className="p-2 border-r border-gray-100 last:border-r-0">
-            <span className="text-[11px] font-medium text-gray-500 block font-sans">Crédito</span>
-            <span className="text-sm lg:text-base font-bold font-sans text-gray-400 block mt-0.5">
-              $0,00
-            </span>
-          </div>
-
-          {/* Otros */}
-          <div className="p-2 border-r border-gray-100 last:border-r-0">
-            <span className="text-[11px] font-medium text-gray-500 block font-sans">Otros</span>
-            <span className="text-sm lg:text-base font-bold font-sans text-gray-400 block mt-0.5">
-              $0,00
-            </span>
-          </div>
-
-          {/* Devoluciones */}
-          <div className="p-2 border-r border-gray-100 last:border-r-0">
-            <span className="text-[11px] font-medium text-gray-500 block font-sans">Devoluciones</span>
-            <span className="text-sm lg:text-base font-bold font-sans text-gray-400 block mt-0.5">
-              $0,00
-            </span>
-          </div>
-
-          {/* Total Ventas */}
-          <div className="p-2 relative col-span-2 sm:col-span-1">
-            <span className="text-[11px] font-bold font-sans text-[#242D49] block">Total ventas</span>
-            <span className="text-base lg:text-lg font-extrabold font-sans text-[#242D49] block mt-0.5">
-              {formatPrice(metrics.totalSales)}
-            </span>
-            <div className="w-full h-1 bg-[#364266] rounded-full mt-1.5" />
-          </div>
-        </div>
-      </div>
-
       {/* Filter and Search Bar */}
       <div className="bg-white rounded-2xl p-3 border border-[#364266]/10 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Search input */}
@@ -376,6 +313,69 @@ export const ReportsPage: React.FC = () => {
           />
         </div>
       )}
+
+      {/* Top KPI Metrics Bar */}
+      <div className="bg-white rounded-2xl p-4 border border-[#364266]/10 shadow-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 text-left">
+          {/* Efectivo */}
+          <div className="p-2 border-r border-gray-100 last:border-r-0">
+            <span className="text-[11px] font-medium text-gray-500 block font-sans">Efectivo</span>
+            <span className="text-sm lg:text-base font-bold font-sans text-[#242D49] block mt-0.5">
+              {formatPrice(metrics.cash)}
+            </span>
+          </div>
+
+          {/* Tarjetas */}
+          <div className="p-2 border-r border-gray-100 last:border-r-0">
+            <span className="text-[11px] font-medium text-gray-500 block font-sans">Tarjetas</span>
+            <span className="text-sm lg:text-base font-bold font-sans text-[#242D49] block mt-0.5">
+              {formatPrice(metrics.cards)}
+            </span>
+            <span className="text-[10px] text-gray-400 font-sans block">(Déb: {formatPrice(metrics.debit)})</span>
+          </div>
+
+          {/* Pagos en línea / QR */}
+          <div className="p-2 border-r border-gray-100 last:border-r-0">
+            <span className="text-[11px] font-medium text-gray-500 block font-sans">Pagos QR / Transferencia</span>
+            <span className="text-sm lg:text-base font-bold font-sans text-[#242D49] block mt-0.5">
+              {formatPrice(metrics.transfer)}
+            </span>
+          </div>
+
+          {/* Crédito */}
+          <div className="p-2 border-r border-gray-100 last:border-r-0">
+            <span className="text-[11px] font-medium text-gray-500 block font-sans">Crédito</span>
+            <span className="text-sm lg:text-base font-bold font-sans text-gray-400 block mt-0.5">
+              $0,00
+            </span>
+          </div>
+
+          {/* Otros */}
+          <div className="p-2 border-r border-gray-100 last:border-r-0">
+            <span className="text-[11px] font-medium text-gray-500 block font-sans">Otros</span>
+            <span className="text-sm lg:text-base font-bold font-sans text-gray-400 block mt-0.5">
+              $0,00
+            </span>
+          </div>
+
+          {/* Devoluciones */}
+          <div className="p-2 border-r border-gray-100 last:border-r-0">
+            <span className="text-[11px] font-medium text-gray-500 block font-sans">Devoluciones</span>
+            <span className="text-sm lg:text-base font-bold font-sans text-gray-400 block mt-0.5">
+              $0,00
+            </span>
+          </div>
+
+          {/* Total Ventas */}
+          <div className="p-2 relative col-span-2 sm:col-span-1">
+            <span className="text-[11px] font-bold font-sans text-[#242D49] block">Total ventas</span>
+            <span className="text-base lg:text-lg font-extrabold font-sans text-[#242D49] block mt-0.5">
+              {formatPrice(metrics.totalSales)}
+            </span>
+            <div className="w-full h-1 bg-[#364266] rounded-full mt-1.5" />
+          </div>
+        </div>
+      </div>
 
       {/* TAB 1: Comprobantes Table (Gia Palette) */}
       {activeTab === 'ventas' && (
@@ -520,11 +520,6 @@ export const ReportsPage: React.FC = () => {
       {/* TAB 2: Gráficas y Estadísticas */}
       {activeTab === 'graficas' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 font-sans">
-          {/* Daily Sales Bar Chart with Interactive Hover */}
-          <div className="col-span-1 lg:col-span-12">
-            <DailySalesChart orders={orders} defaultDays={14} />
-          </div>
-
           {/* Top Flavors Sold - Expanded width (8 cols on lg) and increased height to eliminate text overlap */}
           <div className="col-span-1 lg:col-span-8 bg-white rounded-2xl p-5 border border-[#364266]/10 shadow-sm flex flex-col justify-between">
             <div className="flex items-center justify-between mb-4">
@@ -583,6 +578,11 @@ export const ReportsPage: React.FC = () => {
                 </PieChart>
               </ResponsiveContainer>
             </div>
+          </div>
+
+          {/* Daily Sales Bar Chart with Interactive Hover (Historical Trend) */}
+          <div className="col-span-1 lg:col-span-12">
+            <DailySalesChart orders={orders} defaultDays={14} />
           </div>
         </div>
       )}

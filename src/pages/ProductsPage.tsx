@@ -357,7 +357,7 @@ const ProductsPage = () => {
                     <input
                       value={formData.image}
                       onChange={e => setFormData({ ...formData, image: e.target.value })}
-                      placeholder="/images/gelatos/conos/chocolate.png o URL"
+                      placeholder="/images/gelatos/conos/chocolate.webp o URL"
                       className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-xs outline-none focus:ring-2 focus:ring-[#364266]"
                     />
                     {formData.image && (
